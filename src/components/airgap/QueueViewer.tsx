@@ -112,7 +112,10 @@ export function QueueViewer() {
 
     // Simulate network broadcast
     setTimeout(async () => {
-      const mockHash = `0xhash_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const randomBytes = new Uint8Array(8);
+      crypto.getRandomValues(randomBytes);
+      const hex = Array.from(randomBytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+      const mockHash = `0xhash_${Date.now()}_${hex}`;
       await updateTxStatus(tx.tx_id, 'broadcast', { broadcast_hash: mockHash });
       setBroadcastingId(null);
     }, 1500);

@@ -231,10 +231,13 @@ export function AirGapModal({
 
   const handleSimulatedSign = () => {
     if (!currentTx) return;
+    const randomBytes = new Uint8Array(8);
+    crypto.getRandomValues(randomBytes);
+    const hex = Array.from(randomBytes).map((b) => b.toString(16).padStart(2, '0')).join('');
     // Sign offline with air-gap mock/key
     const signed = signDotTx(currentTx, {
       signer: currentTx.decoded_intent.from,
-      signature: `0xairgap_sig_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`,
+      signature: `0xairgap_sig_${Date.now()}_${hex}`,
       type: currentTx.chain === 'sol' ? 'ed25519' : 'secp256k1',
       signed_at: Date.now(),
     });

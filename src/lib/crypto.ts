@@ -187,8 +187,11 @@ export async function registerPasskeyWithPrf(
 
   // Graceful simulation fallback for environments without biometric hardware
   await new Promise((r) => setTimeout(r, 600));
+  const randomBytes = new Uint8Array(8);
+  crypto.getRandomValues(randomBytes);
+  const hex = Array.from(randomBytes).map((b) => b.toString(16).padStart(2, '0')).join('');
   return {
-    credentialId: 'dot-passkey-' + Math.random().toString(36).slice(2, 10),
+    credentialId: 'dot-passkey-' + hex,
     prfSupported: true,
   };
 }
