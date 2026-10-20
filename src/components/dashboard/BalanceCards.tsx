@@ -198,6 +198,54 @@ export function BalanceCards({ onSend, onReceive, onViewQr }: BalanceCardsProps)
           );
         })}
       </div>
+
+      {/* SPL Token Assets Showcase */}
+      {balances.solana?.splTokens && balances.solana.splTokens.length > 0 && (
+        <div className="crypto-panel rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+                Solana SPL Token Assets
+              </h3>
+            </div>
+            <span className="text-xs font-mono text-zinc-400">
+              {balances.solana.splTokens.length} Tokens
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {balances.solana.splTokens.map((token) => (
+              <div
+                key={token.mint}
+                className="p-3.5 rounded-2xl bg-[#0D0D12] border border-[#1A1A22] hover:border-[#272736] transition flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center font-bold text-xs text-white">
+                    {token.symbol.slice(0, 4)}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-semibold text-zinc-200">{token.symbol}</span>
+                      <span className="text-[10px] font-mono text-zinc-500">${token.tokenPriceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</span>
+                    </div>
+                    <div className="text-[11px] text-zinc-400 truncate max-w-[120px]">{token.name}</div>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-sm font-bold font-mono text-white">
+                    {token.balance}
+                  </div>
+                  <div className="text-[11px] font-mono text-zinc-400">
+                    ≈ ${token.fiatValueUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

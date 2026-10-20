@@ -162,6 +162,17 @@ export function TransactionList() {
                       <span className="truncate max-w-[120px] sm:max-w-[180px]">
                         {isSend ? `To: ${tx.to}` : `From: ${tx.from}`}
                       </span>
+                      {tx.chainId === 'solana' && (
+                        <a
+                          href={`https://solscan.io/tx/${tx.hash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-zinc-500 hover:text-[#14F195] transition"
+                          title="View on Solscan"
+                        >
+                          <ExternalLink size={11} />
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>

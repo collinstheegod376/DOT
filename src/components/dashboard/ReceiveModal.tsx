@@ -1,34 +1,52 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Copy, Check, Download, ShieldCheck, ArrowDownLeft } from 'lucide-react';
+import {
+  X,
+  Copy,
+  Check,
+  Download,
+  ShieldCheck,
+  ArrowDownLeft,
+  ExternalLink,
+  Coins,
+} from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
-import { SupportedChainId } from '@/types/wallet';
-import { SUPPORTED_CHAINS } from '@/lib/constants';
 import { generateQrMatrix, generateQrSvgPath } from '@/lib/qrcode';
 
 interface ReceiveModalProps {
   isOpen: boolean;
   onClose: () => void;
-  defaultChainId?: SupportedChainId;
+  defaultAssetSymbol?: string;
 }
 
-export function ReceiveModal({ isOpen, onClose, defaultChainId = 'ethereum' }: ReceiveModalProps) {
-  const { selectedChains, addresses } = useWallet();
-  const [selectedChainId, setSelectedChainId] = useState<SupportedChainId>(defaultChainId);
+export function ReceiveModal({
+  isOpen,
+  onClose,
+  defaultAssetSymbol = 'SOL',
+}: ReceiveModalProps) {
+  const { tokens, addresses } = useWallet();
+  const [selectedSymbol, setSelectedSymbol] = useState<string>(defaultAssetSymbol);
   const [copied, setCopied] = useState(false);
+
+  React.useEffect(() => {
+    if (defaultAssetSymbol) {
+      setSelectedSymbol(defaultAssetSymbol);
+    }
+  }, [defaultAssetSymbol]);
 
   if (!isOpen) return null;
 
-  const chain = SUPPORTED_CHAINS[selectedChainId];
-  const addrInfo = addresses[selectedChainId];
-  const address = addrInfo?.address || '0x...';
+  const solAddress = addresses.solana?.address || 'Solana Address Loading...';
+  const activeToken =
+    tokens.find((t) => t.symbol.toUpperCase() === selectedSymbol.toUpperCase()) ||
+    tokens[0];
 
-  const matrix = generateQrMatrix(address);
+  const matrix = generateQrMatrix(solAddress);
   const { path, size } = generateQrSvgPath(matrix, 7);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(address);
+    navigator.clipboard.writeText(solAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -39,61 +57,70 @@ export function ReceiveModal({ isOpen, onClose, defaultChainId = 'ethereum' }: R
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${chain.symbol.toLowerCase()}-receive-qr.svg`;
+    a.download = `solana-receive-${selectedSymbol.toLowerCase()}-qr.svg`;
     a.click();
     URL.revokeObjectURL(a.href);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-sm rounded-3xl bg-[#0F0F14] border border-[#1F1F24] p-6 shadow-2xl shadow-black/90">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-sm sm:max-w-md rounded-3xl bg-[#0F1118] border border-[#232736] p-6 shadow-2xl shadow-black/90">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-[#1F1F24] mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-emerald-950/60 border border-emerald-700/50 flex items-center justify-center text-emerald-400">
+        <div className="flex items-center justify-between pb-3.5 border-b border-[#1E2230] mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-[#14F195]">
               <ArrowDownLeft size={16} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Receive Cryptographic Assets</h3>
-              <div className="text-[10px] font-mono text-zinc-400">Scan QR Code or Copy Address</div>
+              <h3 className="text-sm font-bold text-white">Receive Solana Assets</h3>
+              <div className="text-[10px] font-mono text-zinc-400">
+                Native SOL & SPL Tokens
+              </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Chain selector pills */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          {selectedChains.map((id) => {
-            const c = SUPPORTED_CHAINS[id];
-            const isSelected = selectedChainId === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setSelectedChainId(id)}
-                className={`py-2 px-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                  isSelected
-                    ? 'bg-emerald-950/40 border-emerald-500 text-emerald-300'
-                    : 'bg-[#14141C] border-[#272732] text-zinc-400 hover:text-white'
-                }`}
-              >
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: c.color }} />
-                <span>{c.symbol}</span>
-              </button>
-            );
-          })}
+        {/* Asset Selector Pills */}
+        <div className="mb-4">
+          <div className="text-[11px] font-mono text-zinc-400 mb-1.5">
+            Asset to Receive:
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+            {tokens.map((t) => {
+              const isSelected = selectedSymbol.toUpperCase() === t.symbol.toUpperCase();
+              return (
+                <button
+                  key={t.symbol}
+                  onClick={() => setSelectedSymbol(t.symbol)}
+                  className={`py-1.5 px-2 rounded-xl border text-[11px] font-semibold flex items-center justify-center gap-1 transition cursor-pointer ${
+                    isSelected
+                      ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 font-bold'
+                      : 'bg-[#141722] border-[#222736] text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: t.color || '#14F195' }}
+                  />
+                  <span>{t.symbol}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* QR Code Container */}
-        <div className="flex flex-col items-center justify-center my-4">
-          <div className="p-4 rounded-2xl bg-white border-2 border-white shadow-xl shadow-cyan-500/5">
+        <div className="flex flex-col items-center justify-center my-3">
+          <div className="p-3.5 rounded-2xl bg-white border-2 border-white shadow-xl shadow-emerald-500/5">
             <svg
               viewBox={`0 0 ${size} ${size}`}
-              className="w-44 h-44 sm:w-48 sm:h-48"
+              className="w-40 h-40 sm:w-44 sm:h-44"
               fill="#0A0A0C"
             >
               <rect width="100%" height="100%" fill="#FFFFFF" />
@@ -103,31 +130,50 @@ export function ReceiveModal({ isOpen, onClose, defaultChainId = 'ethereum' }: R
 
           <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-emerald-400 font-mono">
             <ShieldCheck size={13} />
-            <span>Standard EIP-55 / Bech32 Verified</span>
+            <span>Solana Base58 Ed25519 Verified</span>
           </div>
         </div>
 
-        {/* Derivation Path */}
-        <div className="mb-3 px-3 py-1.5 rounded-lg bg-[#14141A] border border-[#1F1F24] flex items-center justify-between text-xs">
-          <span className="text-zinc-500 text-[11px]">Derivation Path:</span>
-          <span className="font-mono text-zinc-300 text-[11px]">{chain.derivationPath}</span>
-        </div>
-
-        {/* Formatted Address */}
-        <div className="p-3 rounded-xl bg-[#14141A] border border-[#1F1F24] mb-4">
-          <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">
-            Receiving Address
+        {/* Formatted Address Box */}
+        <div className="p-3 rounded-2xl bg-[#090A0E] border border-[#1E2230] mb-3">
+          <div className="flex items-center justify-between text-[10px] text-zinc-500 uppercase tracking-wider mb-1">
+            <span>Solana Receiving Address</span>
+            <span className="font-mono text-emerald-400">m/44&apos;/501&apos;/0&apos;/0&apos;</span>
           </div>
           <div className="font-mono text-xs text-zinc-200 break-all select-all leading-relaxed">
-            {address}
+            {solAddress}
           </div>
+        </div>
+
+        {/* ATA notice for SPL tokens */}
+        {!activeToken?.isNative && (
+          <div className="mb-3.5 px-3 py-2 rounded-xl bg-emerald-950/20 border border-emerald-800/30 flex items-center justify-between text-[11px] text-zinc-300">
+            <span className="flex items-center gap-1.5">
+              <Coins size={13} className="text-[#14F195]" />
+              <span>Sends directly to your {activeToken?.symbol} ATA</span>
+            </span>
+            <span className="font-mono text-zinc-500">Same Address</span>
+          </div>
+        )}
+
+        {/* Explorer Link Bar */}
+        <div className="mb-4 text-center">
+          <a
+            href={`https://solscan.io/account/${solAddress}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-mono text-[#14F195] hover:underline"
+          >
+            <span>View Account on Solscan Explorer</span>
+            <ExternalLink size={13} />
+          </a>
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           <button
             onClick={handleCopy}
-            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-[#1F1F28] hover:bg-zinc-700 text-zinc-200 transition border border-zinc-700/50 cursor-pointer"
+            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-[#1F2433] hover:bg-zinc-700 text-zinc-200 transition border border-zinc-700/50 cursor-pointer"
           >
             {copied ? (
               <>
@@ -137,7 +183,7 @@ export function ReceiveModal({ isOpen, onClose, defaultChainId = 'ethereum' }: R
             ) : (
               <>
                 <Copy size={14} />
-                <span>Copy</span>
+                <span>Copy Address</span>
               </>
             )}
           </button>
@@ -147,7 +193,7 @@ export function ReceiveModal({ isOpen, onClose, defaultChainId = 'ethereum' }: R
             className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-800/50 transition cursor-pointer"
           >
             <Download size={14} />
-            <span>Save SVG</span>
+            <span>Save SVG QR</span>
           </button>
         </div>
       </div>

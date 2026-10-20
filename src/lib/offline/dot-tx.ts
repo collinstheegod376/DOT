@@ -68,6 +68,29 @@ export interface CreateDotTxParams {
 }
 
 /**
+ * Recursively canonicalizes any JSON-compatible value by sorting object keys lexicographically.
+ * Unlike passing a replacer array to JSON.stringify (which filters property names recursively
+ * at all levels and strips non-matching nested keys), this preserves all nested properties in decoded_intent.
+ */
+export function canonicalizeObject(value: unknown): unknown {
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.map(canonicalizeObject);
+  }
+  const obj = value as Record<string, unknown>;
+  const sortedKeys = Object.keys(obj).sort();
+  const sortedObj: Record<string, unknown> = {};
+  for (const key of sortedKeys) {
+    if (obj[key] !== undefined) {
+      sortedObj[key] = canonicalizeObject(obj[key]);
+    }
+  }
+  return sortedObj;
+}
+
+/**
  * Calculates a deterministic transaction ID from the invariant transaction parameters.
  * Canonicalizes keys to ensure hash reproducibility regardless of key insertion order.
  */
@@ -94,7 +117,7 @@ export function calculateTxId(params: {
     created_at: params.created_at,
   };
 
-  const canonicalString = JSON.stringify(canonicalObject, Object.keys(canonicalObject).sort());
+  const canonicalString = JSON.stringify(canonicalizeObject(canonicalObject));
   const hashBytes = sha256(utf8ToBytes(canonicalString));
   return `0x${bytesToHex(hashBytes)}`;
 }

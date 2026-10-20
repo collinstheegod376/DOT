@@ -49,6 +49,7 @@ export interface PasskeyRegistrationResult {
   rawId: Uint8Array;
   prfEnabled: boolean;
   prfSupported: boolean;
+  secretKey?: Uint8Array | null;
   transports?: string[];
 }
 
@@ -70,11 +71,46 @@ export interface PasskeyAuthResult {
 }
 
 /**
+ * Normalizes a Uint8Array into a standalone ArrayBuffer view slice to avoid
+ * issues with offset/shared backing buffers in WebAuthn BufferSource parameters.
+ */
+function toBufferSource(bytes: Uint8Array): BufferSource {
+  return bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength
+  ) as BufferSource;
+}
+
+/**
+ * Resolves a valid Relying Party ID adhering to W3C WebAuthn Level 3.
+ * WebAuthn strictly forbids IP addresses as rpId. If the current hostname
+ * is an IPv4 or IPv6 address (e.g. 127.0.0.1), fall back to 'localhost'.
+ */
+export function getWebAuthnRpId(overrideRpId?: string): string {
+  if (overrideRpId) return overrideRpId;
+  if (typeof window === 'undefined') return 'localhost';
+  const hostname = window.location.hostname;
+  if (!hostname) return 'localhost';
+
+  // IPv4 regex check
+  const isIpv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+  // IPv6 check
+  const isIpv6 = /^\[?[a-fA-F0-9:]+\]?$/.test(hostname) && hostname.includes(':');
+
+  if (isIpv4 || isIpv6) {
+    return 'localhost';
+  }
+  return hostname;
+}
+
+/**
  * Checks if WebAuthn API is available in the current environment.
+ * Strict W3C requirement: window.isSecureContext MUST be true (HTTPS or localhost).
  */
 export function isWebAuthnAvailable(): boolean {
   return (
     typeof window !== 'undefined' &&
+    window.isSecureContext === true &&
     typeof window.navigator !== 'undefined' &&
     Boolean(window.navigator.credentials) &&
     typeof window.PublicKeyCredential !== 'undefined'
@@ -136,25 +172,26 @@ export async function registerPasskeyWithPrf(
   options: PasskeyRegistrationOptions = {}
 ): Promise<PasskeyRegistrationResult> {
   if (!isWebAuthnAvailable()) {
-    throw new Error('WebAuthn is not supported in this browser or environment.');
+    throw new Error('WebAuthn is not supported in this browser or environment (secure context required).');
   }
 
-  const rpId = options.rpId || (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
+  const rpId = getWebAuthnRpId(options.rpId);
   const rpName = options.rpName || 'DOT Secure Wallet';
   const userName = options.userName || 'dot-vault-owner';
   const userDisplayName = options.userDisplayName || 'DOT Vault Owner';
   const userId = options.userId || secureRandomBytes(16);
   const challenge = options.challenge || secureRandomBytes(32);
+  const prfSalt = getDefaultPrfSalt();
   const timeout = options.timeout || 60_000;
 
   const creationOptions: PublicKeyCredentialCreationOptions = {
-    challenge: challenge as unknown as BufferSource,
+    challenge: toBufferSource(challenge),
     rp: {
       name: rpName,
       id: rpId,
     },
     user: {
-      id: userId as unknown as BufferSource,
+      id: toBufferSource(userId),
       name: userName,
       displayName: userDisplayName,
     },
@@ -170,7 +207,11 @@ export async function registerPasskeyWithPrf(
     },
     timeout,
     extensions: {
-      prf: {},
+      prf: {
+        eval: {
+          first: toBufferSource(prfSalt),
+        },
+      },
     } as unknown as AuthenticationExtensionsClientInputs,
   };
 
@@ -187,7 +228,12 @@ export async function registerPasskeyWithPrf(
 
   // Inspect PRF extension enablement result
   const extensionResults = credential.getClientExtensionResults() as unknown as {
-    prf?: { enabled?: boolean };
+    prf?: {
+      enabled?: boolean;
+      results?: {
+        first?: ArrayBuffer | Uint8Array;
+      };
+    };
   };
   const prfEnabled = Boolean(extensionResults?.prf?.enabled);
 
@@ -195,6 +241,16 @@ export async function registerPasskeyWithPrf(
     throw new PrfNotSupportedError(
       'The selected authenticator does not support the PRF extension for hardware encryption.'
     );
+  }
+
+  let secretKey: Uint8Array | null = null;
+  const rawFirst = extensionResults?.prf?.results?.first;
+  if (rawFirst) {
+    try {
+      secretKey = deriveKeyFromPrf(new Uint8Array(rawFirst));
+    } catch {
+      secretKey = null;
+    }
   }
 
   let transports: string[] | undefined;
@@ -207,6 +263,7 @@ export async function registerPasskeyWithPrf(
     rawId,
     prfEnabled,
     prfSupported: prfEnabled,
+    secretKey,
     transports,
   };
 }
@@ -220,30 +277,36 @@ export async function authenticatePasskeyWithPrf(
   options: PasskeyAuthOptions = {}
 ): Promise<PasskeyAuthResult> {
   if (!isWebAuthnAvailable()) {
-    throw new Error('WebAuthn is not supported in this browser or environment.');
+    throw new Error('WebAuthn is not supported in this browser or environment (secure context required).');
   }
 
-  const rpId = options.rpId || (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
+  const rpId = getWebAuthnRpId(options.rpId);
   const challenge = options.challenge || secureRandomBytes(32);
   const prfSalt = options.salt || getDefaultPrfSalt();
   const timeout = options.timeout || 60_000;
 
   let rawCredentialId: Uint8Array | undefined;
   if (options.credentialId) {
-    rawCredentialId = typeof options.credentialId === 'string'
-      ? base64urlnopad.decode(options.credentialId)
-      : options.credentialId;
+    if (typeof options.credentialId === 'string') {
+      try {
+        rawCredentialId = base64urlnopad.decode(options.credentialId);
+      } catch {
+        rawCredentialId = utf8ToBytes(options.credentialId);
+      }
+    } else {
+      rawCredentialId = options.credentialId;
+    }
   }
 
   const requestOptions: PublicKeyCredentialRequestOptions = {
-    challenge: challenge as unknown as BufferSource,
+    challenge: toBufferSource(challenge),
     rpId,
     userVerification: 'required',
     timeout,
     allowCredentials: rawCredentialId
       ? [
           {
-            id: rawCredentialId as unknown as BufferSource,
+            id: toBufferSource(rawCredentialId),
             type: 'public-key',
             transports: ['internal', 'hybrid'],
           },
@@ -252,7 +315,7 @@ export async function authenticatePasskeyWithPrf(
     extensions: {
       prf: {
         eval: {
-          first: prfSalt as unknown as BufferSource,
+          first: toBufferSource(prfSalt),
         },
       },
     } as unknown as AuthenticationExtensionsClientInputs,

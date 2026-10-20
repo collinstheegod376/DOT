@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import { WalletProvider, useWallet } from '@/context/WalletContext';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { BalanceCards } from '@/components/dashboard/BalanceCards';
-import { ActionButtons } from '@/components/dashboard/ActionButtons';
+import { HeroPortfolio } from '@/components/dashboard/HeroPortfolio';
+import { TokenList } from '@/components/dashboard/TokenList';
 import { TransactionList } from '@/components/dashboard/TransactionList';
 import { SendModal } from '@/components/dashboard/SendModal';
 import { ReceiveModal } from '@/components/dashboard/ReceiveModal';
@@ -14,7 +14,6 @@ import { UnlockModal } from '@/components/dashboard/UnlockModal';
 import { AirGapModal } from '@/components/airgap/AirGapModal';
 import { QrModal } from '@/components/common/QrModal';
 import { SupportedChainId } from '@/types/wallet';
-import { SUPPORTED_CHAINS } from '@/lib/constants';
 
 function WalletAppContent() {
   const { isInitialized } = useWallet();
@@ -24,7 +23,7 @@ function WalletAppContent() {
   const [receiveModalOpen, setReceiveModalOpen] = useState(false);
   const [airGapModalOpen, setAirGapModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-  const [activeModalChain, setActiveModalChain] = useState<SupportedChainId>('ethereum');
+  const [activeAssetSymbol, setActiveAssetSymbol] = useState<string>('SOL');
 
   // QR Modal State
   const [qrModalData, setQrModalData] = useState<{
@@ -34,22 +33,22 @@ function WalletAppContent() {
     derivationPath: string;
   } | null>(null);
 
-  const handleOpenSend = (chainId: SupportedChainId = 'ethereum') => {
-    setActiveModalChain(chainId);
+  const handleOpenSend = (assetSymbol: string = 'SOL') => {
+    setActiveAssetSymbol(assetSymbol);
     setSendModalOpen(true);
   };
 
-  const handleOpenReceive = (chainId: SupportedChainId = 'ethereum') => {
-    setActiveModalChain(chainId);
+  const handleOpenReceive = (assetSymbol: string = 'SOL') => {
+    setActiveAssetSymbol(assetSymbol);
     setReceiveModalOpen(true);
   };
 
-  const handleViewQr = (chainId: SupportedChainId, address: string) => {
+  const handleViewQr = (address: string) => {
     setQrModalData({
       isOpen: true,
-      chainId,
+      chainId: 'solana',
       address,
-      derivationPath: SUPPORTED_CHAINS[chainId].derivationPath,
+      derivationPath: "m/44'/501'/0'/0'",
     });
   };
 
@@ -68,19 +67,18 @@ function WalletAppContent() {
 
       {/* Main Dashboard Body */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6 md:py-8 space-y-6">
-        {/* Balances Section */}
-        <BalanceCards
+        {/* Hero Portfolio Section */}
+        <HeroPortfolio
           onSend={handleOpenSend}
           onReceive={handleOpenReceive}
+          onOpenAirGap={() => setAirGapModalOpen(true)}
           onViewQr={handleViewQr}
         />
 
-        {/* Primary Action Buttons */}
-        <ActionButtons
-          onOpenSend={() => handleOpenSend(activeModalChain)}
-          onOpenReceive={() => handleOpenReceive(activeModalChain)}
-          onOpenAirGap={() => setAirGapModalOpen(true)}
-          onOpenSettings={() => setSettingsModalOpen(true)}
+        {/* Tokens & SPL Assets Section */}
+        <TokenList
+          onSendToken={(token) => handleOpenSend(token.symbol)}
+          onReceiveToken={(token) => handleOpenReceive(token.symbol)}
         />
 
         {/* Transaction & Activity Feed */}
@@ -91,13 +89,13 @@ function WalletAppContent() {
       <SendModal
         isOpen={sendModalOpen}
         onClose={() => setSendModalOpen(false)}
-        defaultChainId={activeModalChain}
+        defaultAssetSymbol={activeAssetSymbol}
       />
 
       <ReceiveModal
         isOpen={receiveModalOpen}
         onClose={() => setReceiveModalOpen(false)}
-        defaultChainId={activeModalChain}
+        defaultAssetSymbol={activeAssetSymbol}
       />
 
       <AirGapModal
@@ -127,11 +125,11 @@ function WalletAppContent() {
       <footer className="w-full border-t border-[#1F1F24] py-6 px-4 text-center">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500 font-mono">
           <div>
-            DOT Sovereign Vault • Client-Side Silicon Cryptography
+            DOT Sovereign Solana Vault • Client-Side Silicon Cryptography
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span>Zero Server Footprint</span>
+            <span className="w-2 h-2 rounded-full bg-[#14F195]" />
+            <span>Zero Server Footprint • SLIP-0010 Ed25519</span>
           </div>
         </div>
       </footer>

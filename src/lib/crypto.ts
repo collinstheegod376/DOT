@@ -12,12 +12,18 @@ import {
 } from './crypto/dot1';
 import {
   registerPasskeyWithPrf as coreRegisterPasskey,
+  authenticatePasskeyWithPrf,
   isPlatformAuthenticatorAvailable,
 } from './crypto/webauthn-prf';
+import { savePasskeyCredentialId } from './storage';
 import { AddressInfo, Dot1BackupEnvelope, SupportedChainId } from '@/types/wallet';
 import { utf8ToBytes } from '@noble/hashes/utils.js';
 
-export { bip39GenerateMnemonic as generateNewMnemonic, bip39ValidateMnemonic as isValidMnemonic };
+export {
+  bip39GenerateMnemonic as generateNewMnemonic,
+  bip39ValidateMnemonic as isValidMnemonic,
+  authenticatePasskeyWithPrf,
+};
 
 /**
  * Derives public addresses for requested chains using Agent 2's derivation engine.
@@ -110,12 +116,13 @@ export function evaluatePasswordStrength(password: string): PasswordStrengthResu
  */
 export async function createDot1Envelope(
   mnemonic: string,
-  passwordFallback: string,
+  passwordFallback: string | Uint8Array,
   chains: SupportedChainId[]
 ): Promise<Dot1BackupEnvelope> {
   const secretBytes = utf8ToBytes(mnemonic.trim());
+  const isKey = passwordFallback instanceof Uint8Array;
   const jsonBackupStr = await createDot1JsonBackup(secretBytes, passwordFallback, {
-    kdf: 'argon2id',
+    kdf: isKey ? 'none' : 'argon2id',
     metadata: {
       mnemonic: mnemonic.trim(),
       chains,
@@ -131,12 +138,12 @@ export async function createDot1Envelope(
  */
 export async function decryptDot1Envelope(
   envelope: Dot1BackupEnvelope,
-  passwordFallback: string
+  passwordFallback: string | Uint8Array
 ): Promise<{ mnemonic: string; chains: SupportedChainId[] } | null> {
   try {
     const jsonStr = typeof envelope === 'string' ? envelope : JSON.stringify(envelope);
-    const decrypted = await parseDot1JsonBackup(jsonStr, passwordFallback);
-    const mnemonic = decrypted.metadata?.mnemonic as string;
+    const decrypted = await parseDot1JsonBackup(jsonStr, passwordFallback as string);
+    const mnemonic = (decrypted.mnemonic || decrypted.metadata?.mnemonic) as string;
     const chains = (decrypted.metadata?.chains as SupportedChainId[]) || envelope.chains;
 
     if (!mnemonic || !bip39ValidateMnemonic(mnemonic)) {
@@ -166,32 +173,33 @@ export function downloadDot1File(envelope: Dot1BackupEnvelope | string, filename
 
 /**
  * WebAuthn Passkey PRF registration ceremony.
- * Calls Agent 1's registerPasskeyPrfCredential or falls back cleanly for non-supporting browsers.
+ * Registers platform authenticator credential with PRF extension.
+ * Throws real error if hardware is unavailable, user cancels, or ceremony fails.
+ * NEVER proceeds with mock/fake credentials.
  */
 export async function registerPasskeyWithPrf(
   username = 'dot-sovereign-vault'
-): Promise<{ credentialId: string; prfSupported: boolean }> {
-  try {
-    const isAvail = await isPlatformAuthenticatorAvailable();
-    if (isAvail) {
-      const reg = await coreRegisterPasskey({
-        userName: username,
-        userDisplayName: 'Dot Vault Sovereign Owner',
-        requirePrf: false, // Allows graceful fallback
-      });
-      return { credentialId: reg.credentialId, prfSupported: reg.prfSupported };
-    }
-  } catch (err) {
-    console.warn('Hardware passkey registration bypassed, falling back:', err);
+): Promise<{ credentialId: string; prfSupported: boolean; secretKey?: Uint8Array | null }> {
+  const isAvail = await isPlatformAuthenticatorAvailable();
+  if (!isAvail) {
+    throw new Error('Biometric platform authenticator (Touch ID, Face ID, Windows Hello) is not available.');
   }
 
-  // Graceful simulation fallback for environments without biometric hardware
-  await new Promise((r) => setTimeout(r, 600));
-  const randomBytes = new Uint8Array(8);
-  crypto.getRandomValues(randomBytes);
-  const hex = Array.from(randomBytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+  const reg = await coreRegisterPasskey({
+    userName: username,
+    userDisplayName: 'Dot Vault Sovereign Owner',
+    requirePrf: false, // Allows graceful fallback if PRF unsupported
+  });
+
+  if (!reg || !reg.credentialId) {
+    throw new Error('Passkey registration ceremony was cancelled or timed out.');
+  }
+
+  await savePasskeyCredentialId(reg.credentialId);
+
   return {
-    credentialId: 'dot-passkey-' + hex,
-    prfSupported: true,
+    credentialId: reg.credentialId,
+    prfSupported: reg.prfSupported,
+    secretKey: reg.secretKey || null,
   };
 }

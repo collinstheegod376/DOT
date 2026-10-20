@@ -15,7 +15,8 @@ import {
   base,
   polygon,
 } from 'viem/chains';
-import { SupportedChainId, ChainBalance } from '@/types/wallet';
+import { SupportedChainId, ChainBalance, SplTokenBalance } from '@/types/wallet';
+import { fetchSplTokenBalances } from '@/lib/chains/spl';
 
 /**
  * DOT Client-Side Live Blockchain RPC & Real-time Balance Engine
@@ -28,6 +29,17 @@ export interface LiveBalanceResult {
   tokenPriceUsd: number;
   fiatValueUsd: number;
   change24hPercent: number;
+  status: 'online' | 'offline' | 'rate_limited' | 'error';
+  lastUpdated: number;
+}
+
+export interface SolanaPortfolioResult {
+  solBalance: string;
+  solPriceUsd: number;
+  solFiatUsd: number;
+  solChange24hPercent: number;
+  splTokens: SplTokenBalance[];
+  totalPortfolioUsd: number;
   status: 'online' | 'offline' | 'rate_limited' | 'error';
   lastUpdated: number;
 }
@@ -376,37 +388,57 @@ export async function fetchSolanaBalance(
 }
 
 // ============================================================================
-// Live Fiat Price Fetching (CoinGecko with Binance Fallback)
+// Live Fiat Price Fetching (CoinGecko with In-Memory Caching & Stablecoin Logic)
 // ============================================================================
 
 /**
- * Fetches live USD prices for ETH, BTC, and SOL.
- * Primary: CoinGecko Free API
- * Fallback: Binance 24hr ticker API
+ * Fetches live USD prices for SOL and SPL tokens.
+ * Stablecoins (USDC, USDT) default to $1.00.
+ * SOL, JUP, RAY, BONK, and PYTH fetched from CoinGecko.
  */
-export async function fetchCryptoPrices(): Promise<Record<string, TokenPriceData>> {
+export async function fetchSolanaAndSplPrices(): Promise<Record<string, TokenPriceData>> {
   const now = Date.now();
   if (priceCache && now - priceCache.timestamp < PRICE_CACHE_TTL_MS) {
     return priceCache.data;
   }
 
-  const defaultPrices: Record<string, TokenPriceData> = {
-    ethereum: { priceUsd: 0, change24hPercent: 0 },
-    bitcoin: { priceUsd: 0, change24hPercent: 0 },
-    solana: { priceUsd: 0, change24hPercent: 0 },
+  // Baseline fallback prices
+  const result: Record<string, TokenPriceData> = {
+    solana: { priceUsd: 154.20, change24hPercent: 0 },
+    'usd-coin': { priceUsd: 1.0, change24hPercent: 0 },
+    tether: { priceUsd: 1.0, change24hPercent: 0 },
+    'jupiter-exchange-solana': { priceUsd: 0.85, change24hPercent: 0 },
+    raydium: { priceUsd: 2.10, change24hPercent: 0 },
+    bonk: { priceUsd: 0.000022, change24hPercent: 0 },
+    'pyth-network': { priceUsd: 0.35, change24hPercent: 0 },
+    // Symbol aliases
+    SOL: { priceUsd: 154.20, change24hPercent: 0 },
+    USDC: { priceUsd: 1.0, change24hPercent: 0 },
+    USDT: { priceUsd: 1.0, change24hPercent: 0 },
+    JUP: { priceUsd: 0.85, change24hPercent: 0 },
+    RAY: { priceUsd: 2.10, change24hPercent: 0 },
+    BONK: { priceUsd: 0.000022, change24hPercent: 0 },
+    PYTH: { priceUsd: 0.35, change24hPercent: 0 },
+    // Mint aliases
+    'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': { priceUsd: 1.0, change24hPercent: 0 },
+    'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': { priceUsd: 1.0, change24hPercent: 0 },
+    'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN': { priceUsd: 0.85, change24hPercent: 0 },
+    '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R': { priceUsd: 2.10, change24hPercent: 0 },
+    'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': { priceUsd: 0.000022, change24hPercent: 0 },
+    'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3': { priceUsd: 0.35, change24hPercent: 0 },
   };
 
   if (isClientOffline()) {
-    return priceCache ? priceCache.data : defaultPrices;
+    return priceCache ? priceCache.data : result;
   }
 
-  // 1. Try CoinGecko
+  // 1. Fetch live prices from CoinGecko
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 6000);
 
     const res = await fetch(
-      'https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,solana&vs_currencies=usd&include_24hr_change=true',
+      'https://api.coingecko.com/api/v3/simple/price?ids=solana,jupiter-exchange-solana,raydium,bonk,pyth-network,ethereum,bitcoin&vs_currencies=usd&include_24hr_change=true',
       {
         signal: controller.signal,
         headers: { Accept: 'application/json' },
@@ -417,75 +449,133 @@ export async function fetchCryptoPrices(): Promise<Record<string, TokenPriceData
 
     if (res.ok) {
       const data = await res.json();
-      if (data && data.ethereum && data.bitcoin && data.solana) {
-        const result: Record<string, TokenPriceData> = {
-          ethereum: {
-            priceUsd: Number(data.ethereum.usd) || 0,
-            change24hPercent: Number(data.ethereum.usd_24h_change?.toFixed(2)) || 0,
-          },
-          bitcoin: {
-            priceUsd: Number(data.bitcoin.usd) || 0,
-            change24hPercent: Number(data.bitcoin.usd_24h_change?.toFixed(2)) || 0,
-          },
-          solana: {
-            priceUsd: Number(data.solana.usd) || 0,
-            change24hPercent: Number(data.solana.usd_24h_change?.toFixed(2)) || 0,
-          },
+      if (data && typeof data === 'object') {
+        const parseToken = (id: string) => {
+          if (data[id]) {
+            return {
+              priceUsd: Number(data[id].usd) || 0,
+              change24hPercent: Number(data[id].usd_24h_change?.toFixed(2)) || 0,
+            };
+          }
+          return null;
         };
+
+        const sol = parseToken('solana');
+        if (sol) {
+          result.solana = sol;
+          result.SOL = sol;
+        }
+
+        const jup = parseToken('jupiter-exchange-solana');
+        if (jup) {
+          result['jupiter-exchange-solana'] = jup;
+          result.JUP = jup;
+          result['JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN'] = jup;
+        }
+
+        const ray = parseToken('raydium');
+        if (ray) {
+          result.raydium = ray;
+          result.RAY = ray;
+          result['4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R'] = ray;
+        }
+
+        const bonk = parseToken('bonk');
+        if (bonk) {
+          result.bonk = bonk;
+          result.BONK = bonk;
+          result['DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263'] = bonk;
+        }
+
+        const pyth = parseToken('pyth-network');
+        if (pyth) {
+          result['pyth-network'] = pyth;
+          result.PYTH = pyth;
+          result['HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3'] = pyth;
+        }
+
+        // Fixed stablecoins
+        result.USDC = { priceUsd: 1.0, change24hPercent: 0 };
+        result.USDT = { priceUsd: 1.0, change24hPercent: 0 };
+        result['EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'] = { priceUsd: 1.0, change24hPercent: 0 };
+        result['Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'] = { priceUsd: 1.0, change24hPercent: 0 };
 
         priceCache = { timestamp: now, data: result };
         return result;
       }
     }
-  } catch (error) {
-    console.warn('[DOT RPC] CoinGecko price fetch failed, trying Binance fallback...', error);
+  } catch (err) {
+    console.warn('[DOT RPC] CoinGecko price fetch failed:', err);
   }
 
-  // 2. Try Binance fallback tickers
-  try {
-    const symbols = [
-      { id: 'ethereum', symbol: 'ETHUSDT' },
-      { id: 'bitcoin', symbol: 'BTCUSDT' },
-      { id: 'solana', symbol: 'SOLUSDT' },
-    ];
+  return priceCache ? priceCache.data : result;
+}
 
-    const binanceData: Record<string, TokenPriceData> = {};
+/**
+ * Backward compatibility alias for fetchCryptoPrices
+ */
+export async function fetchCryptoPrices(): Promise<Record<string, TokenPriceData>> {
+  return fetchSolanaAndSplPrices();
+}
 
-    await Promise.all(
-      symbols.map(async ({ id, symbol }) => {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-          const res = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`, {
-            signal: controller.signal,
-            headers: { Accept: 'application/json' },
-          });
-
-          clearTimeout(timeoutId);
-
-          if (res.ok) {
-            const ticker = await res.json();
-            binanceData[id] = {
-              priceUsd: parseFloat(ticker.lastPrice) || 0,
-              change24hPercent: parseFloat(parseFloat(ticker.priceChangePercent || '0').toFixed(2)),
-            };
-          }
-        } catch {
-          // Ignore individual ticker failures
-        }
-      })
-    );
-
-    if (binanceData.ethereum && binanceData.bitcoin && binanceData.solana) {
-      priceCache = { timestamp: now, data: binanceData };
-      return binanceData;
-    }
-  } catch (error) {
-    console.warn('[DOT RPC] Binance price fallback failed:', error);
+/**
+ * Fetches native SOL balance + all SPL token balances for the wallet address in parallel.
+ * Fetches live USD prices for SOL and SPL tokens (USDC = $1.00, USDT = $1.00, JUP/RAY/BONK/PYTH via live API).
+ * Computes total portfolio USD value (SOL fiat value + sum of all SPL token fiat values).
+ */
+export async function fetchSolanaPortfolio(address: string): Promise<SolanaPortfolioResult> {
+  if (isClientOffline()) {
+    return {
+      solBalance: '0.00',
+      solPriceUsd: 0,
+      solFiatUsd: 0,
+      solChange24hPercent: 0,
+      splTokens: [],
+      totalPortfolioUsd: 0,
+      status: 'offline',
+      lastUpdated: Date.now(),
+    };
   }
 
-  return priceCache ? priceCache.data : defaultPrices;
+  // Fetch SOL balance, SPL token accounts, and live prices concurrently in parallel
+  const [solBalanceRes, splTokens, prices] = await Promise.all([
+    fetchSolanaBalance(address),
+    fetchSplTokenBalances(address, true),
+    fetchSolanaAndSplPrices(),
+  ]);
+
+  const solBalanceNum = parseFloat(solBalanceRes.balance) || 0;
+  const solPrice = prices['solana']?.priceUsd || 0;
+  const solFiatUsd = Math.round(solBalanceNum * solPrice * 100) / 100;
+  const solChange24hPercent = prices['solana']?.change24hPercent || 0;
+
+  let totalSplFiatUsd = 0;
+
+  for (const token of splTokens) {
+    // Lookup price by mint or symbol
+    const priceInfo = prices[token.mint] || prices[token.symbol] || { priceUsd: 0, change24hPercent: 0 };
+    token.tokenPriceUsd = priceInfo.priceUsd;
+    token.change24hPercent = priceInfo.change24hPercent;
+
+    const tokenBalanceNum = parseFloat(token.balance) || 0;
+    const tokenFiat = Math.round(tokenBalanceNum * token.tokenPriceUsd * 100) / 100;
+    token.fiatValueUsd = tokenFiat;
+
+    totalSplFiatUsd += tokenFiat;
+  }
+
+  const totalPortfolioUsd = Math.round((solFiatUsd + totalSplFiatUsd) * 100) / 100;
+
+  return {
+    solBalance: solBalanceRes.balance,
+    solPriceUsd: solPrice,
+    solFiatUsd,
+    solChange24hPercent,
+    splTokens,
+    totalPortfolioUsd,
+    status: solBalanceRes.status,
+    lastUpdated: Date.now(),
+  };
 }
 
 // ============================================================================
@@ -501,13 +591,13 @@ export interface ChainBalanceOutput {
 }
 
 /**
- * Unified live multi-chain balance and fiat valuation fetcher.
+ * Unified live balance and fiat valuation fetcher.
  * Queries real public RPCs directly from the client browser.
  * Every newly generated or empty address returns genuine "0.00" balance.
  *
  * @param addresses Map of chain ID -> address string or AddressInfo
  * @param existingBalances Optional existing balances map to fall back on if network is unreachable
- * @returns Map of chain ID -> { chainId, balance, tokenPriceUsd, fiatValueUsd, change24hPercent }
+ * @returns Map of chain ID -> { chainId, balance, tokenPriceUsd, fiatValueUsd, change24hPercent, splTokens, totalPortfolioFiatUsd }
  */
 export async function fetchLiveChainBalances(
   addresses: Record<string, string | { address?: string } | undefined>,
@@ -517,7 +607,7 @@ export async function fetchLiveChainBalances(
   const chainIds = Object.keys(addresses);
 
   // If no addresses provided, initialize with clean defaults
-  const targetChains: SupportedChainId[] = ['ethereum', 'bitcoin', 'solana'];
+  const targetChains: SupportedChainId[] = ['solana'];
   for (const c of targetChains) {
     const existing = existingBalances?.[c];
     result[c] = {
@@ -526,6 +616,8 @@ export async function fetchLiveChainBalances(
       tokenPriceUsd: existing?.tokenPriceUsd || 0,
       fiatValueUsd: existing?.fiatValueUsd || 0,
       change24hPercent: existing?.change24hPercent || 0,
+      splTokens: existing?.splTokens || [],
+      totalPortfolioFiatUsd: existing?.totalPortfolioFiatUsd || 0,
     };
   }
 
@@ -533,68 +625,25 @@ export async function fetchLiveChainBalances(
     return result as Record<SupportedChainId, ChainBalance>;
   }
 
-  // Fetch prices in parallel with balances
-  const [prices] = await Promise.all([
-    fetchCryptoPrices(),
-  ]);
-
-  // Query on-chain balances for each address concurrently
+  // Concurrently fetch balances for all addresses
   await Promise.all(
     chainIds.map(async (chainId) => {
       const raw = addresses[chainId];
       const address = typeof raw === 'string' ? raw : raw?.address || '';
       const normalizedChain = chainId.toLowerCase();
 
-      let balanceRes: { balance: string; status: 'online' | 'offline' | 'rate_limited' | 'error' } = {
-        balance: '0.00',
-        status: 'online',
-      };
-
-      if (!address || address === '0x...' || address.length < 10) {
-        balanceRes = { balance: '0.00', status: 'online' };
-      } else if (
-        normalizedChain === 'ethereum' ||
-        normalizedChain === 'arbitrum' ||
-        normalizedChain === 'optimism' ||
-        normalizedChain === 'base' ||
-        normalizedChain === 'polygon' ||
-        address.startsWith('0x')
-      ) {
-        balanceRes = await fetchEvmBalance(address, normalizedChain);
-      } else if (
-        normalizedChain === 'bitcoin' ||
-        address.startsWith('bc1') ||
-        address.startsWith('1') ||
-        address.startsWith('3')
-      ) {
-        balanceRes = await fetchBitcoinBalance(address);
-      } else if (normalizedChain === 'solana') {
-        balanceRes = await fetchSolanaBalance(address);
+      if (normalizedChain === 'solana') {
+        const portfolio = await fetchSolanaPortfolio(address);
+        result['solana'] = {
+          chainId: 'solana',
+          balance: portfolio.solBalance,
+          tokenPriceUsd: portfolio.solPriceUsd,
+          fiatValueUsd: portfolio.totalPortfolioUsd, // Reflects full portfolio fiat value
+          change24hPercent: portfolio.solChange24hPercent,
+          splTokens: portfolio.splTokens,
+          totalPortfolioFiatUsd: portfolio.totalPortfolioUsd,
+        };
       }
-
-      // Map prices: match by chain name or fallback to existing or 0
-      const existing = existingBalances?.[chainId];
-      const priceInfo = prices[normalizedChain] || {
-        priceUsd: existing?.tokenPriceUsd || 0,
-        change24hPercent: existing?.change24hPercent || 0,
-      };
-
-      const numericBalance = parseFloat(balanceRes.balance) || 0;
-      const fiatValueUsd = Math.round(numericBalance * priceInfo.priceUsd * 100) / 100;
-
-      const typedChainId = (
-        targetChains.includes(chainId as SupportedChainId)
-          ? chainId
-          : 'ethereum'
-      ) as SupportedChainId;
-
-      result[chainId] = {
-        chainId: typedChainId,
-        balance: balanceRes.balance,
-        tokenPriceUsd: priceInfo.priceUsd,
-        fiatValueUsd,
-        change24hPercent: priceInfo.change24hPercent,
-      };
     })
   );
 

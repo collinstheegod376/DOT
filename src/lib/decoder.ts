@@ -1,9 +1,10 @@
 import { isAddress, getAddress } from 'viem';
-import { DecodedTransactionIntent, SecurityWarning, SupportedChainId } from '@/types/wallet';
+import { AnyChainId, DecodedTransactionIntent, SecurityWarning, SupportedChainId } from '@/types/wallet';
 import { SUPPORTED_CHAINS } from './constants';
+import { validateSolanaAddress } from './chains/sol';
 
 export function decodeTransactionIntent(params: {
-  chainId: SupportedChainId;
+  chainId: SupportedChainId | AnyChainId | string;
   recipient: string;
   amount: string;
   currentBalance: string;
@@ -11,20 +12,22 @@ export function decodeTransactionIntent(params: {
   priorityFeeLevel?: 'low' | 'normal' | 'fast';
 }): DecodedTransactionIntent {
   const { chainId, recipient, amount, currentBalance, tokenPriceUsd, priorityFeeLevel = 'normal' } = params;
-  const config = SUPPORTED_CHAINS[chainId];
+  const config = (SUPPORTED_CHAINS as Record<string, any>)[chainId] || SUPPORTED_CHAINS.solana;
   const warnings: SecurityWarning[] = [];
 
   const cleanRecipient = recipient.trim();
   const parsedAmount = parseFloat(amount) || 0;
   const parsedBalance = parseFloat(currentBalance) || 0;
 
+  const chain = String(chainId).toLowerCase();
+
   // Fee estimation based on chain & speed
   let feeAmount = '0.0012';
-  if (chainId === 'ethereum') {
+  if (chain === 'ethereum') {
     feeAmount = priorityFeeLevel === 'fast' ? '0.0028' : priorityFeeLevel === 'low' ? '0.0009' : '0.0015';
-  } else if (chainId === 'bitcoin') {
+  } else if (chain === 'bitcoin') {
     feeAmount = priorityFeeLevel === 'fast' ? '0.00015' : priorityFeeLevel === 'low' ? '0.00004' : '0.00008';
-  } else if (chainId === 'solana') {
+  } else if (chain === 'solana') {
     feeAmount = '0.000005';
   }
 
@@ -36,7 +39,7 @@ export function decodeTransactionIntent(params: {
   let isEip55Valid = false;
   let formattedRecipient = cleanRecipient;
 
-  if (chainId === 'ethereum') {
+  if (chain === 'ethereum') {
     if (isAddress(cleanRecipient)) {
       try {
         const checksummed = getAddress(cleanRecipient);
@@ -61,7 +64,7 @@ export function decodeTransactionIntent(params: {
         description: 'Recipient does not conform to 42-character 0x EVM hex format.',
       });
     }
-  } else if (chainId === 'bitcoin') {
+  } else if (chain === 'bitcoin') {
     const isSegwit = cleanRecipient.startsWith('bc1q') || cleanRecipient.startsWith('bc1p');
     const isLegacy = cleanRecipient.startsWith('1') || cleanRecipient.startsWith('3');
     if (isSegwit) {
@@ -84,19 +87,19 @@ export function decodeTransactionIntent(params: {
         description: 'Input does not match valid Bitcoin mainnet address formats.',
       });
     }
-  } else if (chainId === 'solana') {
-    if (cleanRecipient.length >= 32 && cleanRecipient.length <= 44) {
+  } else if (chain === 'solana') {
+    if (validateSolanaAddress(cleanRecipient, true)) {
       isEip55Valid = true;
       warnings.push({
         level: 'info',
-        title: 'Solana Base58 Valid',
-        description: 'Recipient matches standard Ed25519 public key format.',
+        title: 'Solana Address Verified',
+        description: 'Recipient matches cryptographic Ed25519 public key format.',
       });
     } else if (cleanRecipient.length > 0) {
       warnings.push({
         level: 'danger',
         title: 'Invalid Solana Address',
-        description: 'Address string length out of range for Base58 public key.',
+        description: 'Address is not a valid 32-byte Base58 Solana public key.',
       });
     }
   }
@@ -139,7 +142,7 @@ export function decodeTransactionIntent(params: {
   }
 
   return {
-    chainId,
+    chainId: (chainId === 'solana' ? 'solana' : 'solana') as SupportedChainId,
     recipient: formattedRecipient,
     recipientLabel,
     amount: parsedAmount.toString(),

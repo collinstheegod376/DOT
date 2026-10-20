@@ -1,4 +1,30 @@
-export type SupportedChainId = 'ethereum' | 'bitcoin' | 'solana';
+export type SupportedChainId = 'solana';
+export type DeprecatedChainId = 'ethereum' | 'bitcoin';
+export type AnyChainId = SupportedChainId | DeprecatedChainId;
+
+export interface SplTokenConfig {
+  mint: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  icon?: string;
+  coingeckoId?: string;
+  color?: string;
+}
+
+export interface SplTokenBalance {
+  mint: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  balance: string;
+  rawAmount: string;
+  tokenAccountAddress?: string;
+  tokenPriceUsd: number;
+  fiatValueUsd: number;
+  change24hPercent?: number;
+  icon?: string;
+}
 
 export interface ChainConfig {
   id: SupportedChainId;
@@ -24,6 +50,22 @@ export interface ChainBalance {
   fiatValueUsd: number;
   tokenPriceUsd: number;
   change24hPercent: number;
+  splTokens?: SplTokenBalance[];
+  totalPortfolioFiatUsd?: number;
+}
+
+export interface TokenAsset {
+  symbol: string;
+  name: string;
+  mint: string;
+  decimals: number;
+  balance: string;
+  tokenPriceUsd: number;
+  fiatValueUsd: number;
+  change24hPercent: number;
+  icon?: string;
+  color?: string;
+  isNative?: boolean;
 }
 
 export type TransactionStatus = 'confirmed' | 'pending' | 'queued_offline';

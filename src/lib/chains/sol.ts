@@ -40,11 +40,22 @@ export function deriveSolanaPrivateKey(seed: Uint8Array, path = "m/44'/501'/0'/0
   const segments = cleanPath.split('/');
   for (const segment of segments) {
     const isHardened = segment.endsWith("'") || segment.endsWith('h');
-    const indexStr = isHardened ? segment.slice(0, -1) : segment;
+    if (!isHardened) {
+      throw new Error(
+        `SLIP-0010 Ed25519 derivation strictly requires hardened path segments (found '${segment}' in '${path}')`
+      );
+    }
+
+    const indexStr = segment.slice(0, -1);
     const indexNum = parseInt(indexStr, 10);
 
-    if (isNaN(indexNum)) {
-      throw new Error(`Invalid path segment: ${segment}`);
+    if (isNaN(indexNum) || !Number.isInteger(indexNum)) {
+      throw new Error(`Invalid path segment index: '${segment}'`);
+    }
+
+    // Bounds check: SLIP-0010 hardened indexes are 0 <= indexNum < 0x80000000 (2^31)
+    if (indexNum < 0 || indexNum >= 0x80000000) {
+      throw new Error(`Derivation index out of bounds [0, 0x7FFFFFFF]: '${segment}' (${indexNum})`);
     }
 
     // Ed25519 only supports hardened derivation
@@ -105,15 +116,37 @@ export function solanaAccountFromPrivateKey(privateKey: Uint8Array): SolAccount 
 
 /**
  * Validates whether a given string is a valid Solana Base58 public key / address
+ * and verifies that it lies on the Ed25519 elliptic curve.
+ *
+ * @param address Base58 encoded Solana address string
+ * @param allowOffCurve Set to true if Program Derived Addresses (PDAs) which intentionally lie off-curve should be permitted
+ * @returns boolean true if valid
  */
-export function validateSolanaAddress(address: string): boolean {
+export function validateSolanaAddress(address: string, allowOffCurve = false): boolean {
   if (!address || typeof address !== 'string') return false;
   try {
     const bytes = base58.decode(address);
-    return bytes.length === 32;
+    if (bytes.length !== 32) return false;
+
+    // Off-curve PDAs allowed only when explicitly requested
+    if (allowOffCurve) {
+      return true;
+    }
+
+    // Curve point validation: verify the 32 bytes decompress to a valid Ed25519 elliptic curve point
+    const point = ed25519.Point.fromBytes(bytes);
+    point.assertValidity();
+    return true;
   } catch {
     return false;
   }
+}
+
+/**
+ * Checks whether a given Solana address or 32-byte public key lies on the Ed25519 elliptic curve.
+ */
+export function isSolanaAddressOnCurve(address: string): boolean {
+  return validateSolanaAddress(address, false);
 }
 
 /**

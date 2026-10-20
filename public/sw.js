@@ -51,6 +51,9 @@ self.addEventListener('fetch', (event) => {
   // Only handle HTTP/HTTPS requests
   if (!request.url.startsWith('http')) return;
 
+  // Only handle GET requests (prevents TypeError on POST/PUT/DELETE)
+  if (request.method !== 'GET') return;
+
   // For HTML navigation requests, try cache first, then network, then fallback
   if (request.mode === 'navigate') {
     event.respondWith(

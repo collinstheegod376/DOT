@@ -6,18 +6,23 @@ import {
   ChainBalance,
   Dot1BackupEnvelope,
   SupportedChainId,
+  TokenAsset,
   TransactionRecord,
 } from '@/types/wallet';
 import { INITIAL_CHAINS, SAMPLE_INITIAL_BALANCES, SUPPORTED_CHAINS } from '@/lib/constants';
+import { DEFAULT_SOLANA_TOKENS, getLiveTokenAssets } from '@/lib/tokens';
 import {
   createDot1Envelope,
   decryptDot1Envelope,
   deriveAddressesFromMnemonic,
   derivePrivateKeys,
   registerPasskeyWithPrf,
+  authenticatePasskeyWithPrf,
 } from '@/lib/crypto';
 import {
   isVaultInitialized,
+  loadPasskeyCredentialId,
+  loadPrfVaultEnvelope,
   loadPublicAddresses,
   loadSelectedChains,
   loadTransactions,
@@ -43,6 +48,7 @@ interface WalletContextType {
   hasPasskey: boolean;
   hasPasswordFallback: boolean;
   balances: Record<SupportedChainId, ChainBalance>;
+  tokens: TokenAsset[];
   totalFiatBalance: number;
   transactions: TransactionRecord[];
   latestEnvelope: Dot1BackupEnvelope | null;
@@ -81,7 +87,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [isAirGapSimulated, setIsAirGapSimulated] = useState<boolean>(false);
-  const [activeNetwork, setActiveNetwork] = useState<string>('Ethereum Mainnet');
+  const [activeNetwork, setActiveNetwork] = useState<string>('Solana Mainnet-Beta');
+  const [tokens, setTokens] = useState<TokenAsset[]>(DEFAULT_SOLANA_TOKENS);
   const [selectedChains, setSelectedChainsState] = useState<SupportedChainId[]>(INITIAL_CHAINS);
   const [addresses, setAddresses] = useState<Record<SupportedChainId, AddressInfo>>(
     {} as Record<SupportedChainId, AddressInfo>
@@ -154,13 +161,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     loadStorage();
   }, []);
 
-  // Compute aggregate total fiat
-  const totalFiatBalance = Object.values(balances).reduce((sum, b) => {
-    if (selectedChains.includes(b.chainId)) {
-      return sum + b.fiatValueUsd;
-    }
-    return sum;
-  }, 0);
+  // Compute aggregate total fiat from balances or tokens
+  const totalFiatBalance =
+    balances.solana?.totalPortfolioFiatUsd !== undefined && balances.solana?.totalPortfolioFiatUsd > 0
+      ? balances.solana.totalPortfolioFiatUsd
+      : tokens.reduce((sum, t) => sum + (t.fiatValueUsd || 0), 0);
 
   // Live balance fetcher
   const refreshBalances = useCallback(async () => {
@@ -172,6 +177,53 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     try {
       const updated = await fetchLiveChainBalances(addresses, balances);
       setBalances(updated);
+
+      if (updated.solana?.splTokens && updated.solana.splTokens.length > 0) {
+        const solToken: TokenAsset = {
+          symbol: 'SOL',
+          name: 'Solana',
+          mint: 'native',
+          decimals: 9,
+          balance: updated.solana.balance,
+          tokenPriceUsd: updated.solana.tokenPriceUsd,
+          fiatValueUsd: (parseFloat(updated.solana.balance) || 0) * updated.solana.tokenPriceUsd,
+          change24hPercent: updated.solana.change24hPercent,
+          color: '#14F195',
+          isNative: true,
+        };
+        const splMapped: TokenAsset[] = updated.solana.splTokens.map((t) => ({
+          symbol: t.symbol,
+          name: t.name,
+          mint: t.mint,
+          decimals: t.decimals,
+          balance: t.balance,
+          tokenPriceUsd: t.tokenPriceUsd,
+          fiatValueUsd: t.fiatValueUsd,
+          change24hPercent: t.change24hPercent || 0,
+          icon: t.icon,
+          color:
+            t.symbol === 'USDC'
+              ? '#2775CA'
+              : t.symbol === 'USDT'
+              ? '#26A17B'
+              : t.symbol === 'JUP'
+              ? '#00BEA0'
+              : t.symbol === 'RAY'
+              ? '#3A78FF'
+              : t.symbol === 'BONK'
+              ? '#FFA500'
+              : '#E6DAFE',
+          isNative: false,
+        }));
+        setTokens([solToken, ...splMapped]);
+      } else {
+        const solAddr = addresses.solana?.address || '';
+        const solBal = updated.solana?.balance || balances.solana?.balance || '0.00';
+        const solPrice = updated.solana?.tokenPriceUsd;
+        const solChange = updated.solana?.change24hPercent;
+        const updatedTokens = await getLiveTokenAssets(solAddr, solBal, solPrice, solChange);
+        setTokens(updatedTokens);
+      }
     } catch (err) {
       console.warn('[WalletContext] refreshBalances error:', err);
     } finally {
@@ -188,9 +240,59 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
     let isMounted = true;
     fetchLiveChainBalances(addresses, balances)
-      .then((updated) => {
+      .then(async (updated) => {
         if (isMounted) {
           setBalances(updated);
+          if (updated.solana?.splTokens && updated.solana.splTokens.length > 0) {
+            const solToken: TokenAsset = {
+              symbol: 'SOL',
+              name: 'Solana',
+              mint: 'native',
+              decimals: 9,
+              balance: updated.solana.balance,
+              tokenPriceUsd: updated.solana.tokenPriceUsd,
+              fiatValueUsd: (parseFloat(updated.solana.balance) || 0) * updated.solana.tokenPriceUsd,
+              change24hPercent: updated.solana.change24hPercent,
+              color: '#14F195',
+              isNative: true,
+            };
+            const splMapped: TokenAsset[] = updated.solana.splTokens.map((t) => ({
+              symbol: t.symbol,
+              name: t.name,
+              mint: t.mint,
+              decimals: t.decimals,
+              balance: t.balance,
+              tokenPriceUsd: t.tokenPriceUsd,
+              fiatValueUsd: t.fiatValueUsd,
+              change24hPercent: t.change24hPercent || 0,
+              icon: t.icon,
+              color:
+                t.symbol === 'USDC'
+                  ? '#2775CA'
+                  : t.symbol === 'USDT'
+                  ? '#26A17B'
+                  : t.symbol === 'JUP'
+                  ? '#00BEA0'
+                  : t.symbol === 'RAY'
+                  ? '#3A78FF'
+                  : t.symbol === 'BONK'
+                  ? '#FFA500'
+                  : '#E6DAFE',
+              isNative: false,
+            }));
+            if (isMounted) {
+              setTokens([solToken, ...splMapped]);
+            }
+          } else {
+            const solAddr = addresses.solana?.address || '';
+            const solBal = updated.solana?.balance || '0.00';
+            const solPrice = updated.solana?.tokenPriceUsd;
+            const solChange = updated.solana?.change24hPercent;
+            const updatedTokens = await getLiveTokenAssets(solAddr, solBal, solPrice, solChange);
+            if (isMounted) {
+              setTokens(updatedTokens);
+            }
+          }
         }
       })
       .catch((err) => {
@@ -284,34 +386,58 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const unlockWithPasskey = useCallback(async (): Promise<boolean> => {
     try {
-      const result = await registerPasskeyWithPrf();
-      if (result.credentialId) {
+      const storedCredentialId = await loadPasskeyCredentialId();
+      const authResult = await authenticatePasskeyWithPrf({
+        credentialId: storedCredentialId || undefined,
+      });
+
+      if (!authResult.success) {
+        return false;
+      }
+
+      // Retrieve encrypted envelopes from session or IndexedDB storage
+      const envelopeToDecrypt = latestEnvelope || (await loadVaultEnvelope());
+      const prfEnvelope = await loadPrfVaultEnvelope();
+
+      let decrypted: { mnemonic: string; chains: SupportedChainId[] } | null = null;
+
+      // 1. Try decrypting PRF-dedicated envelope with derived PRF secret key
+      if (authResult.secretKey && prfEnvelope) {
+        decrypted = await decryptDot1Envelope(prfEnvelope, authResult.secretKey);
+      }
+
+      // 2. Try decrypting the primary backup envelope with derived PRF secret key
+      if (!decrypted && authResult.secretKey && envelopeToDecrypt) {
+        decrypted = await decryptDot1Envelope(envelopeToDecrypt, authResult.secretKey);
+      }
+
+      if (decrypted) {
+        const derived = deriveAddressesFromMnemonic(decrypted.mnemonic, decrypted.chains);
+        const derivedPriv = derivePrivateKeys(decrypted.mnemonic, decrypted.chains);
+        await savePublicAddresses(derived);
+        setAddresses(derived);
+        setMnemonicPhrase(decrypted.mnemonic);
+        setPrivateKeys(derivedPriv);
         setIsLocked(false);
-        if (Object.keys(addresses).length === 0) {
-          const loaded = await loadPublicAddresses();
-          if (loaded) {
-            setAddresses(loaded);
-          } else {
-            const sampleMnemonic = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-            const derived = deriveAddressesFromMnemonic(sampleMnemonic, selectedChains);
-            setAddresses(derived);
-          }
-        }
         return true;
       }
+
+      // If PRF did not yield decrypted vault, fail cleanly without insecure fallbacks
       return false;
-    } catch {
+    } catch (err) {
+      console.warn('[WalletContext] unlockWithPasskey error:', err);
       return false;
     }
-  }, [addresses, selectedChains]);
+  }, [latestEnvelope]);
 
   const unlockWithPassword = useCallback(
     async (password: string): Promise<boolean> => {
-      if (!latestEnvelope) {
+      const envelopeToDecrypt = latestEnvelope || (await loadVaultEnvelope());
+      if (!envelopeToDecrypt) {
         setIsLocked(false);
         return true;
       }
-      const decrypted = await decryptDot1Envelope(latestEnvelope, password);
+      const decrypted = await decryptDot1Envelope(envelopeToDecrypt, password);
       if (decrypted) {
         const derived = deriveAddressesFromMnemonic(decrypted.mnemonic, decrypted.chains);
         const derivedPriv = derivePrivateKeys(decrypted.mnemonic, decrypted.chains);
@@ -398,6 +524,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         hasPasskey,
         hasPasswordFallback,
         balances,
+        tokens,
         totalFiatBalance,
         transactions,
         latestEnvelope,
