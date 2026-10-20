@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
 import { TokenAsset } from '@/types/wallet';
+import { getTokenIcon } from '@/lib/token-icons';
 
 interface TokenListProps {
   onSendToken: (token: TokenAsset) => void;
@@ -94,15 +95,8 @@ export function TokenList({ onSendToken, onReceiveToken }: TokenListProps) {
                 {/* Left: Token Badge, Name, Symbol, and Price */}
                 <div className="flex items-center gap-3.5 min-w-[200px]">
                   {/* Icon / Symbol Badge */}
-                  <div
-                    className="w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs shrink-0 shadow-md"
-                    style={{
-                      backgroundColor: `${token.color || '#14F195'}22`,
-                      color: token.color || '#14F195',
-                      border: `1.5px solid ${token.color || '#14F195'}55`,
-                    }}
-                  >
-                    {token.symbol.slice(0, 4)}
+                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md overflow-hidden bg-black/10 dark:bg-black/30 border border-zinc-200 dark:border-zinc-800">
+                    {getTokenIcon(token.symbol, 28)}
                   </div>
 
                   <div>

@@ -72,6 +72,17 @@ export const DEFAULT_SOLANA_TOKENS: TokenAsset[] = [
     change24hPercent: -1.25,
     color: '#F08E2D',
   },
+  {
+    symbol: 'PYTH',
+    name: 'Pyth Network',
+    mint: 'HZ1JovNiRvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3',
+    decimals: 6,
+    balance: '0.00',
+    tokenPriceUsd: 0.38,
+    fiatValueUsd: 0.00,
+    change24hPercent: 2.15,
+    color: '#7C4DFF',
+  },
 ];
 
 const SOLANA_RPC_ENDPOINTS = [

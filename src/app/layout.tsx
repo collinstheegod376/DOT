@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { OfflineProvider } from '../components/offline/OfflineProvider';
+import { ThemeProvider } from '../context/ThemeContext';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0A0A0C',
+  themeColor: '#0B0B0F',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -43,11 +44,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} dark h-full`}>
-      <body className="crypto-grid min-h-full flex flex-col bg-[#0A0A0C] text-[#EDEDED] antialiased selection:bg-[#05F292]/20 selection:text-[#05F292]">
-        <OfflineProvider>
-          {children}
-        </OfflineProvider>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} dark h-full`} suppressHydrationWarning>
+      <body className="crypto-grid min-h-full flex flex-col antialiased selection:bg-[#14F195]/20 selection:text-[#14F195]">
+        <ThemeProvider>
+          <OfflineProvider>
+            {children}
+          </OfflineProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

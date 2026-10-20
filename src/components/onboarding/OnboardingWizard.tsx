@@ -22,8 +22,11 @@ import {
   Sparkles,
   ExternalLink,
   Coins,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
+import { useTheme } from '@/context/ThemeContext';
 import { SupportedChainId } from '@/types/wallet';
 import { SUPPORTED_CHAINS } from '@/lib/constants';
 import {
@@ -203,12 +206,29 @@ export function OnboardingWizard() {
 
   const solanaAddress = generatedAddresses?.solana?.address || '';
   const solanaDerivationPath = "m/44'/501'/0'/0'";
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-8 md:py-12">
       {/* Top Branding / Step Progress Indicator */}
-      <div className="mb-8 text-center">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-mono mb-4 shadow-[0_0_15px_rgba(20,241,149,0.15)]">
+      <div className="mb-8 text-center relative">
+        {/* Theme Toggle Button */}
+        <div className="absolute right-0 top-0">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--panel-hover)] border border-[var(--card-border)] transition-all cursor-pointer shadow-sm"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? (
+              <Sun size={17} className="text-amber-400" />
+            ) : (
+              <Moon size={17} className="text-indigo-600" />
+            )}
+          </button>
+        </div>
+
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-4 shadow-[0_0_15px_rgba(20,241,149,0.15)]">
           <div className="w-2 h-2 rounded-full bg-[#14F195] animate-pulse" />
           <span>SOLANA SOVEREIGN VAULT</span>
         </div>
@@ -223,12 +243,12 @@ export function OnboardingWizard() {
                   ? 'bg-[#14F195] shadow-[0_0_10px_#14F195]'
                   : s < step
                   ? 'bg-cyan-500'
-                  : 'bg-zinc-800'
+                  : 'bg-[var(--panel-hover)]'
               }`}
             />
           ))}
         </div>
-        <div className="text-[11px] font-mono text-zinc-500 uppercase tracking-widest">
+        <div className="text-[11px] font-mono text-[var(--text-muted)] uppercase tracking-widest">
           Ceremony Phase {step} of 4
         </div>
       </div>
