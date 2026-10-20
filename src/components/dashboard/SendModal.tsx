@@ -196,13 +196,12 @@ export function SendModal({
                       key={t.symbol}
                       type="button"
                       onClick={() => setSelectedSymbol(t.symbol)}
-                      className={`p-2 rounded-none border text-xs font-mono font-bold flex flex-col items-center justify-center gap-1 transition cursor-pointer ${
+                      className={`py-2 px-2 rounded-none border text-xs font-mono font-bold flex items-center justify-center transition cursor-pointer ${
                         isSelected
                           ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
                           : 'bg-[#F7F7F7] dark:bg-[#1D1D1E] border-black/10 dark:border-[#353536] text-zinc-700 dark:text-zinc-300 hover:border-black dark:hover:border-white'
                       }`}
                     >
-                      <div className="w-2 h-2 rounded-none bg-black dark:bg-white" />
                       <span className="font-mono text-xs">{t.symbol}</span>
                     </button>
                   );

@@ -21,11 +21,8 @@ import {
   Sparkles,
   ExternalLink,
   Coins,
-  Sun,
-  Moon,
 } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
-import { useTheme } from '@/context/ThemeContext';
 import { SupportedChainId } from '@/types/wallet';
 import {
   deriveAddressesFromMnemonic,
@@ -202,27 +199,11 @@ export function OnboardingWizard() {
   };
 
   const solanaAddress = generatedAddresses?.solana?.address || '';
-  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-8 md:py-12">
       {/* Top Branding / Step Progress Indicator */}
       <div className="mb-8 text-center relative">
-        {/* Theme Toggle Button */}
-        <div className="absolute right-0 top-0">
-          <button
-            onClick={toggleTheme}
-            className="p-2.5 rounded-none text-black dark:text-white bg-white dark:bg-[#16161E] border border-black dark:border-[#353536] hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer shadow-none"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? (
-              <Sun size={16} />
-            ) : (
-              <Moon size={16} />
-            )}
-          </button>
-        </div>
 
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-none bg-black text-white dark:bg-white dark:text-black border border-black dark:border-white text-xs font-sans font-bold uppercase tracking-wider mb-4 shadow-none">
           <span className="w-2 h-2 rounded-none bg-emerald-500" />

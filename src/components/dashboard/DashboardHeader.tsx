@@ -10,11 +10,8 @@ import {
   Check,
   Radio,
   RefreshCw,
-  Sun,
-  Moon,
 } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
-import { useTheme } from '@/context/ThemeContext';
 
 interface DashboardHeaderProps {
   onOpenSettings: () => void;
@@ -55,7 +52,6 @@ export function DashboardHeader({ onOpenSettings }: DashboardHeaderProps) {
     isRefreshingBalances,
     refreshBalances,
   } = useWallet();
-  const { theme, toggleTheme, isDark } = useTheme();
   const [networkDropdownOpen, setNetworkDropdownOpen] = useState(false);
 
   const currentNet =
@@ -184,25 +180,6 @@ export function DashboardHeader({ onOpenSettings }: DashboardHeaderProps) {
             <span className="hidden md:inline">Lock</span>
           </button>
 
-          {/* Theme Toggle Button (Light/Dark Mode) */}
-          <button
-            onClick={toggleTheme}
-            className="flex items-center justify-center p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] hover:border-zinc-500 text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium transition cursor-pointer shadow-sm"
-            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            aria-label="Toggle Theme"
-          >
-            {isDark ? (
-              <>
-                <Sun size={15} className="text-amber-400" />
-                <span className="hidden xl:inline ml-1.5 text-[11px] font-mono">Light</span>
-              </>
-            ) : (
-              <>
-                <Moon size={15} className="text-blue-500" />
-                <span className="hidden xl:inline ml-1.5 text-[11px] font-mono">Dark</span>
-              </>
-            )}
-          </button>
 
           {/* Settings / Backup Button */}
           <button

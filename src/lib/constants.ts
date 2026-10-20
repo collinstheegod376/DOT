@@ -109,6 +109,8 @@ export const STORAGE_KEYS = {
   PUBLIC_ADDRESSES: 'dot_public_addresses',
   PASSKEY_CREDENTIAL_ID: 'dot_passkey_credential_id',
   PRF_VAULT_ENVELOPE: 'dot_prf_vault_envelope',
+  CACHED_BALANCES: 'dot_cached_balances',
+  CACHED_TOKENS: 'dot_cached_tokens',
 };
 
 export const SAMPLE_INITIAL_BALANCES: Record<SupportedChainId, {

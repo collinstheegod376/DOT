@@ -46,7 +46,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${ibmPlexMono.variable} light h-full`} suppressHydrationWarning>
+    <html lang="en" data-theme="light" className={`${dmSans.variable} ${ibmPlexMono.variable} light h-full`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col antialiased bg-[#FFFFFF] text-[#222222] font-sans">
         <ThemeProvider>
           <OfflineProvider>

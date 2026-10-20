@@ -21,95 +21,47 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
-  const [mounted, setMounted] = useState(false);
+  const [theme] = useState<Theme>('light');
 
-  const applyTheme = (t: Theme) => {
+  const applyTheme = () => {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
-    if (t === 'light') {
-      root.classList.remove('dark');
-      root.classList.add('light');
-      root.setAttribute('data-theme', 'light');
-      root.style.colorScheme = 'light';
-      if (document.body) {
-        document.body.classList.remove('dark');
-        document.body.classList.add('light');
-      }
-    } else {
-      root.classList.remove('light');
-      root.classList.add('dark');
-      root.setAttribute('data-theme', 'dark');
-      root.style.colorScheme = 'dark';
-      if (document.body) {
-        document.body.classList.remove('light');
-        document.body.classList.add('dark');
-      }
+    root.classList.remove('dark');
+    root.classList.add('light');
+    root.setAttribute('data-theme', 'light');
+    root.style.colorScheme = 'light';
+    if (document.body) {
+      document.body.classList.remove('dark');
+      document.body.classList.add('light');
     }
   };
 
   useEffect(() => {
-    setMounted(true);
+    applyTheme();
     try {
-      const saved = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-      if (saved === 'dark') {
-        setThemeState('dark');
-        applyTheme('dark');
-      } else {
-        setThemeState('light');
-        applyTheme('light');
-      }
-    } catch {
-      applyTheme('light');
-    }
-  }, []);
-
-  // Listen for OS system theme changes if not explicitly overridden by user
-  useEffect(() => {
-    if (!mounted || typeof window === 'undefined') return;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemChange = (e: MediaQueryListEvent) => {
-      try {
-        const saved = localStorage.getItem(THEME_STORAGE_KEY);
-        if (!saved) {
-          const sysTheme: Theme = e.matches ? 'dark' : 'light';
-          setThemeState(sysTheme);
-          applyTheme(sysTheme);
-        }
-      } catch {
-        // Ignore storage error
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleSystemChange);
-    return () => mediaQuery.removeEventListener('change', handleSystemChange);
-  }, [mounted]);
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+      localStorage.setItem(THEME_STORAGE_KEY, 'light');
     } catch {
       // Ignore storage error
     }
-    applyTheme(newTheme);
+  }, []);
+
+  const setTheme = (_newTheme: Theme) => {
+    applyTheme();
   };
 
   const toggleTheme = () => {
-    const nextTheme: Theme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
+    // Pure light mode enforcement - no-op or re-affirm light mode
+    applyTheme();
   };
-
-  const isDark = theme === 'dark';
 
   const contextValue = useMemo<ThemeContextType>(
     () => ({
-      theme,
+      theme: 'light',
       toggleTheme,
       setTheme,
-      isDark,
+      isDark: false,
     }),
-    [theme, isDark]
+    []
   );
 
   return (

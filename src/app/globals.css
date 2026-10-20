@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.never-match-dark, .never-match-dark *));
+
 /* =========================================================================
    REDNIT-FIVE DESIGN SYSTEM & WCAG AAA MONOCHROMATIC TOKENS
    =========================================================================
@@ -12,18 +14,18 @@
    ========================================================================= */
 
 :root {
-  /* Rednit-five Light Mode Core Monochromatic Palette */
+  /* Rednit-five Light Mode Core Monochromatic Palette: Pure White Canvas */
   --canvas: #FFFFFF;
   --body: #222222;
   --muted: #555555;
   --hairline: #E5E7EB;
   --primary: #000000;
-  --surface: #F7F7F7;
+  --surface: #FFFFFF;
 
   /* Semantic UI Aliases */
   --background: var(--canvas);
   --foreground: var(--body);
-  --card-bg: var(--surface);
+  --card-bg: var(--canvas);
   --card-border: var(--hairline);
   --card-shadow: none;
   --border: var(--hairline);
@@ -43,9 +45,9 @@
   --header-bg: var(--canvas);
   --header-border: var(--hairline);
 
-  --panel-bg: var(--surface);
+  --panel-bg: var(--canvas);
   --panel-border: var(--hairline);
-  --panel-hover: #ECECEC;
+  --panel-hover: #F7F7F7;
 
   --input-bg: var(--canvas);
   --input-border: var(--hairline);
@@ -78,57 +80,31 @@
   --font-geist-mono: var(--font-ibm-plex-mono);
 }
 
+/* Redundant safety: if .dark class is ever somehow attached, enforce pure white canvas */
 .dark {
-  /* Rednit-five Dark Mode Core Monochromatic Palette */
-  --canvas: #0F0F10;
-  --body: #F5F5F5;
-  --muted: #9E9E9E;
-  --hairline: #353536;
-  --primary: #FFFFFF;
-  --surface: #1D1D1E;
-
-  /* Semantic UI Aliases */
+  --canvas: #FFFFFF;
+  --body: #222222;
+  --muted: #555555;
+  --hairline: #E5E7EB;
+  --primary: #000000;
+  --surface: #FFFFFF;
   --background: var(--canvas);
   --foreground: var(--body);
-  --card-bg: var(--surface);
+  --card-bg: var(--canvas);
   --card-border: var(--hairline);
   --card-shadow: none;
   --border: var(--hairline);
-
   --text-primary: var(--primary);
   --text-secondary: var(--body);
   --text-muted: var(--muted);
   --text-subtle: var(--muted);
-
-  --brand-primary: var(--primary);
-  --brand-blue: #FFFFFF;
-  --brand-emerald: #FFFFFF;
-  --brand-cyan: #F5F5F5;
-  --brand-amber: #9E9E9E;
-  --brand-rose: #F5F5F5;
-
   --header-bg: var(--canvas);
   --header-border: var(--hairline);
-
-  --panel-bg: var(--surface);
+  --panel-bg: var(--canvas);
   --panel-border: var(--hairline);
-  --panel-hover: #262628;
-
+  --panel-hover: #F7F7F7;
   --input-bg: var(--canvas);
   --input-border: var(--hairline);
-
-  --chart-line: var(--primary);
-  --chart-gradient-from: rgba(255, 255, 255, 0.12);
-  --chart-gradient-to: rgba(255, 255, 255, 0.00);
-  --chart-grid-line: var(--hairline);
-  --chart-axis-text: var(--muted);
-
-  --scrollbar-track: var(--canvas);
-  --scrollbar-thumb: var(--hairline);
-  --scrollbar-thumb-hover: var(--muted);
-
-  --grid-glow: transparent;
-  --grid-line: rgba(255, 255, 255, 0.04);
 }
 
 @theme inline {

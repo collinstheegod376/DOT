@@ -21,6 +21,8 @@ import {
 } from '@/lib/crypto';
 import {
   isVaultInitialized,
+  loadCachedBalances,
+  loadCachedTokens,
   loadPasskeyCredentialId,
   loadPrfVaultEnvelope,
   loadPublicAddresses,
@@ -28,6 +30,8 @@ import {
   loadTransactions,
   loadVaultEnvelope,
   resetVaultStorage,
+  saveCachedBalances,
+  saveCachedTokens,
   savePublicAddresses,
   saveSelectedChains,
   saveTransactions,
@@ -85,7 +89,9 @@ const WalletContext = createContext<WalletContextType | null>(null);
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(false);
-  const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
   const [isAirGapSimulated, setIsAirGapSimulated] = useState<boolean>(false);
   const [activeNetwork, setActiveNetwork] = useState<string>('Solana Mainnet-Beta');
   const [tokens, setTokens] = useState<TokenAsset[]>(DEFAULT_SOLANA_TOKENS);
@@ -120,7 +126,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    setIsOnline(navigator.onLine);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
@@ -134,6 +139,17 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function loadStorage() {
       try {
+        const [cachedBal, cachedTok] = await Promise.all([
+          loadCachedBalances(),
+          loadCachedTokens(),
+        ]);
+        if (cachedBal && Object.keys(cachedBal).length > 0) {
+          setBalances(cachedBal as Record<SupportedChainId, ChainBalance>);
+        }
+        if (cachedTok && cachedTok.length > 0) {
+          setTokens(cachedTok);
+        }
+
         const initialized = await isVaultInitialized();
         if (initialized) {
           setIsInitialized(true);
@@ -177,6 +193,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     try {
       const updated = await fetchLiveChainBalances(addresses, balances);
       setBalances(updated);
+      await saveCachedBalances(updated);
 
       if (updated.solana?.splTokens && updated.solana.splTokens.length > 0) {
         const solToken: TokenAsset = {
@@ -215,7 +232,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
               : '#E6DAFE',
           isNative: false,
         }));
-        setTokens([solToken, ...splMapped]);
+        const nextTokens = [solToken, ...splMapped];
+        setTokens(nextTokens);
+        await saveCachedTokens(nextTokens);
       } else {
         const solAddr = addresses.solana?.address || '';
         const solBal = updated.solana?.balance || balances.solana?.balance || '0.00';
@@ -223,6 +242,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         const solChange = updated.solana?.change24hPercent;
         const updatedTokens = await getLiveTokenAssets(solAddr, solBal, solPrice, solChange);
         setTokens(updatedTokens);
+        await saveCachedTokens(updatedTokens);
       }
     } catch (err) {
       console.warn('[WalletContext] refreshBalances error:', err);
@@ -243,6 +263,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       .then(async (updated) => {
         if (isMounted) {
           setBalances(updated);
+          await saveCachedBalances(updated);
           if (updated.solana?.splTokens && updated.solana.splTokens.length > 0) {
             const solToken: TokenAsset = {
               symbol: 'SOL',
@@ -281,7 +302,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
               isNative: false,
             }));
             if (isMounted) {
-              setTokens([solToken, ...splMapped]);
+              const nextTokens = [solToken, ...splMapped];
+              setTokens(nextTokens);
+              await saveCachedTokens(nextTokens);
             }
           } else {
             const solAddr = addresses.solana?.address || '';
@@ -291,6 +314,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
             const updatedTokens = await getLiveTokenAssets(solAddr, solBal, solPrice, solChange);
             if (isMounted) {
               setTokens(updatedTokens);
+              await saveCachedTokens(updatedTokens);
             }
           }
         }
@@ -463,6 +487,17 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setAddresses({} as Record<SupportedChainId, AddressInfo>);
     setSelectedChainsState(INITIAL_CHAINS);
     setTransactions([]);
+    setBalances(() => {
+      const map = {} as Record<SupportedChainId, ChainBalance>;
+      for (const id of INITIAL_CHAINS) {
+        map[id] = {
+          chainId: id,
+          ...SAMPLE_INITIAL_BALANCES[id],
+        };
+      }
+      return map;
+    });
+    setTokens(DEFAULT_SOLANA_TOKENS);
   }, []);
 
   const sendTransaction = useCallback(
@@ -487,7 +522,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         const current = prev[txInput.chainId];
         if (!current) return prev;
         const newBal = Math.max(0, parseFloat(current.balance) - parsedAmount);
-        return {
+        const nextBalances = {
           ...prev,
           [txInput.chainId]: {
             ...current,
@@ -495,6 +530,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
             fiatValueUsd: newBal * current.tokenPriceUsd,
           },
         };
+        saveCachedBalances(nextBalances).catch((err) =>
+          console.warn('[WalletContext] Failed to cache balance after send:', err)
+        );
+        return nextBalances;
       });
 
       // Refresh on-chain balances shortly after sending if online

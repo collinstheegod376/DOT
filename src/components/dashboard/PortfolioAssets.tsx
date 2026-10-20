@@ -153,9 +153,8 @@ export function PortfolioAssets({
       {/* Fresh Vault Clean Indicator */}
       {totalFiatBalance === 0 && (
         <div className="mt-4 pt-3 border-t border-black/10 dark:border-[#353536] flex items-center justify-between text-[11px] font-mono text-zinc-500">
-          <span className="flex items-center gap-1.5 uppercase font-mono">
-            <span className="w-1.5 h-1.5 rounded-none bg-black dark:bg-white" />
-            <span>Vault Ready — Deposit assets to activate tracking</span>
+          <span className="uppercase font-mono">
+            Vault Ready — Deposit assets to activate tracking
           </span>
           <span className="text-black dark:text-white font-bold uppercase">Ready</span>
         </div>

@@ -101,13 +101,12 @@ export function ReceiveModal({
                 <button
                   key={t.symbol}
                   onClick={() => setSelectedSymbol(t.symbol)}
-                  className={`py-1.5 px-2 rounded-none border text-[11px] font-mono font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
+                  className={`py-1.5 px-2 rounded-none border text-[11px] font-mono font-bold flex items-center justify-center transition cursor-pointer ${
                     isSelected
                       ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
                       : 'bg-[#F7F7F7] dark:bg-[#1D1D1E] border-black/10 dark:border-[#353536] text-zinc-700 dark:text-zinc-300 hover:border-black dark:hover:border-white'
                   }`}
                 >
-                  <div className="w-1.5 h-1.5 rounded-none bg-black dark:bg-white" />
                   <span>{t.symbol}</span>
                 </button>
               );

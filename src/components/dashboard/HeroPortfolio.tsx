@@ -69,7 +69,6 @@ export function HeroPortfolio({
       {/* Top Bar: Vault Status & Solana Address */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-5 border-b border-black/10 dark:border-[#353536]">
         <div className="flex items-center gap-2.5">
-          <div className="w-2 h-2 rounded-none bg-black dark:bg-white" />
           <span className="text-xs font-sans uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-black">
             SOLANA PORTFOLIO
           </span>

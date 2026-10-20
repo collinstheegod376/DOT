@@ -126,13 +126,13 @@ function WalletAppContent() {
       {/* 3. Mobile Floating Bottom Action Bar */}
       <nav
         aria-label="Mobile Navigation Bar"
-        className="fixed bottom-0 left-0 right-0 z-30 lg:hidden p-2 bg-white/95 dark:bg-[#0F0F10]/95 backdrop-blur-xl border-t border-black dark:border-[#353536]"
+        className="fixed bottom-0 left-0 right-0 z-30 lg:hidden p-2 bg-white/95 backdrop-blur-xl border-t border-black"
       >
         <div className="max-w-md mx-auto grid grid-cols-4 gap-1.5">
           {/* Send */}
           <button
             onClick={() => handleOpenSend('SOL')}
-            className="h-12 flex flex-col items-center justify-center rounded-none bg-black text-white dark:bg-white dark:text-black font-sans font-black text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer border border-black dark:border-white"
+            className="h-12 flex flex-col items-center justify-center rounded-none bg-black text-white font-sans font-black text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer border border-black"
           >
             <ArrowUpRight size={16} strokeWidth={2.5} />
             <span className="mt-0.5">SEND</span>
@@ -141,7 +141,7 @@ function WalletAppContent() {
           {/* Receive */}
           <button
             onClick={() => handleOpenReceive('SOL')}
-            className="h-12 flex flex-col items-center justify-center rounded-none bg-[#F7F7F7] dark:bg-[#1D1D1E] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-black dark:text-white border border-black/10 dark:border-[#353536] font-sans font-black text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer"
+            className="h-12 flex flex-col items-center justify-center rounded-none bg-[#F7F7F7] hover:bg-black hover:text-white text-black border border-black/10 font-sans font-black text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer"
           >
             <ArrowDownLeft size={16} strokeWidth={2.5} />
             <span className="mt-0.5">RECEIVE</span>
@@ -150,7 +150,7 @@ function WalletAppContent() {
           {/* QR */}
           <button
             onClick={() => solAddress && handleViewQr(solAddress)}
-            className="h-12 flex flex-col items-center justify-center rounded-none bg-[#F7F7F7] dark:bg-[#1D1D1E] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-black dark:text-white border border-black/10 dark:border-[#353536] font-sans font-black text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer"
+            className="h-12 flex flex-col items-center justify-center rounded-none bg-[#F7F7F7] hover:bg-black hover:text-white text-black border border-black/10 font-sans font-black text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer"
           >
             <QrCode size={16} />
             <span className="mt-0.5">QR</span>
@@ -159,7 +159,7 @@ function WalletAppContent() {
           {/* Air-Gap / Offline */}
           <button
             onClick={() => setAirGapModalOpen(true)}
-            className="h-12 flex flex-col items-center justify-center rounded-none bg-[#F7F7F7] dark:bg-[#1D1D1E] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black text-black dark:text-white border border-black/10 dark:border-[#353536] font-sans font-black text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer"
+            className="h-12 flex flex-col items-center justify-center rounded-none bg-[#F7F7F7] hover:bg-black hover:text-white text-black border border-black/10 font-sans font-black text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer"
           >
             <Radio size={16} />
             <span className="mt-0.5">OFFLINE</span>
@@ -204,14 +204,13 @@ function WalletAppContent() {
       <UnlockModal />
 
       {/* 5. Desktop Footer */}
-      <footer className="w-full border-t border-black dark:border-[#353536] py-6 px-4 text-center mt-12 bg-white dark:bg-[#0F0F10]">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600 dark:text-zinc-400 font-mono">
+      <footer className="w-full border-t border-black py-6 px-4 text-center mt-12 bg-white">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-600 font-mono">
           <div className="flex items-center gap-2">
-            <ShieldCheck size={14} className="text-black dark:text-white" />
+            <ShieldCheck size={14} className="text-black" />
             <span className="uppercase font-bold tracking-wider">DOT Sovereign Vault • Hardware-Isolated Client Security</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-none bg-black dark:bg-white" />
+          <div>
             <span className="uppercase font-bold tracking-wider">Self-Custodial • Solana Network Verified</span>
           </div>
         </div>

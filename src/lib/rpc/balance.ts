@@ -634,15 +634,19 @@ export async function fetchLiveChainBalances(
 
       if (normalizedChain === 'solana') {
         const portfolio = await fetchSolanaPortfolio(address);
-        result['solana'] = {
-          chainId: 'solana',
-          balance: portfolio.solBalance,
-          tokenPriceUsd: portfolio.solPriceUsd,
-          fiatValueUsd: portfolio.totalPortfolioUsd, // Reflects full portfolio fiat value
-          change24hPercent: portfolio.solChange24hPercent,
-          splTokens: portfolio.splTokens,
-          totalPortfolioFiatUsd: portfolio.totalPortfolioUsd,
-        };
+        if ((portfolio.status === 'offline' || portfolio.status === 'error') && existingBalances?.['solana']) {
+          result['solana'] = existingBalances['solana'];
+        } else {
+          result['solana'] = {
+            chainId: 'solana',
+            balance: portfolio.solBalance,
+            tokenPriceUsd: portfolio.solPriceUsd,
+            fiatValueUsd: portfolio.totalPortfolioUsd, // Reflects full portfolio fiat value
+            change24hPercent: portfolio.solChange24hPercent,
+            splTokens: portfolio.splTokens,
+            totalPortfolioFiatUsd: portfolio.totalPortfolioUsd,
+          };
+        }
       }
     })
   );

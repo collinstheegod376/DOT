@@ -707,8 +707,7 @@ export function AirGapModal({
 
         {/* Footer */}
         <div className="border-t border-black/10 dark:border-[#353536] px-6 py-3 bg-[#F7F7F7] dark:bg-[#1D1D1E] flex items-center justify-between text-xs text-zinc-500 font-mono">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-none bg-black dark:bg-white" />
+          <div>
             <span className="font-bold text-[11px] uppercase">SOVEREIGN AIR-GAP RELAY: ZERO NETWORK EXPOSURE</span>
           </div>
           <button

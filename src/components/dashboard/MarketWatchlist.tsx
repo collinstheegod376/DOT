@@ -27,9 +27,8 @@ export function MarketWatchlist({ onSelectToken }: MarketWatchlistProps) {
           </h2>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-500 uppercase tracking-wider font-bold">
-          <span className="w-1.5 h-1.5 rounded-none bg-black dark:bg-white" />
-          <span>SOLANA LIVE</span>
+        <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider font-bold">
+          SOLANA LIVE
         </div>
       </div>
 

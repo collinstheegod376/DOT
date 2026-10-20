@@ -113,6 +113,44 @@ export async function loadPrfVaultEnvelope(): Promise<Dot1BackupEnvelope | null>
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function saveCachedBalances(balances: Record<string, any>): Promise<void> {
+  assertZeroPlaintextSecrets(balances, 'cachedBalances');
+  if (typeof window === 'undefined') return;
+  await set(STORAGE_KEYS.CACHED_BALANCES, balances);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function loadCachedBalances(): Promise<Record<string, any> | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = await get<Record<string, any>>(STORAGE_KEYS.CACHED_BALANCES);
+    return data || null;
+  } catch {
+    return null;
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function saveCachedTokens(tokens: any[]): Promise<void> {
+  assertZeroPlaintextSecrets(tokens, 'cachedTokens');
+  if (typeof window === 'undefined') return;
+  await set(STORAGE_KEYS.CACHED_TOKENS, tokens);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function loadCachedTokens(): Promise<any[] | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data = await get<any[]>(STORAGE_KEYS.CACHED_TOKENS);
+    return data || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function resetVaultStorage(): Promise<void> {
   if (typeof window === 'undefined') return;
   await del(STORAGE_KEYS.VAULT_ENVELOPE);
@@ -122,4 +160,6 @@ export async function resetVaultStorage(): Promise<void> {
   await del(STORAGE_KEYS.TRANSACTION_HISTORY);
   await del(STORAGE_KEYS.PASSKEY_CREDENTIAL_ID);
   await del(STORAGE_KEYS.PRF_VAULT_ENVELOPE);
+  await del(STORAGE_KEYS.CACHED_BALANCES);
+  await del(STORAGE_KEYS.CACHED_TOKENS);
 }

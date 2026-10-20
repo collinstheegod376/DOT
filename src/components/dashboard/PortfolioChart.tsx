@@ -474,16 +474,16 @@ export function PortfolioChart({ initialBalance, className = '' }: PortfolioChar
         {/* Floating Tooltip Pill */}
         {hoveredPoint && (
           <div
-            className="absolute z-20 pointer-events-none -translate-x-1/2 transition-transform duration-75 ease-out shadow-2xl"
+            className="absolute z-20 pointer-events-none -translate-x-1/2 transition-transform duration-75 ease-out"
             style={{
               left: `${(hoveredPoint.x / VIEW_WIDTH) * 100}%`,
               top: `${Math.max(10, (hoveredPoint.y / VIEW_HEIGHT) * 100 - 24)}%`,
             }}
           >
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#090A0E]/95 dark:bg-[#14141C]/95 text-white border border-emerald-500/40 backdrop-blur-md text-xs font-mono shadow-[0_4px_20px_rgba(0,0,0,0.6)] whitespace-nowrap">
-              <span className="text-zinc-400 font-sans">{hoveredPoint.tooltipTime}</span>
-              <span className="text-zinc-500">•</span>
-              <span className="font-bold text-[#14F195]">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-none bg-white text-black border border-black text-xs font-mono whitespace-nowrap">
+              <span className="text-zinc-600 font-sans">{hoveredPoint.tooltipTime}</span>
+              <span className="text-zinc-400">•</span>
+              <span className="font-bold text-black font-mono">
                 ${hoveredPoint.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
@@ -493,7 +493,7 @@ export function PortfolioChart({ initialBalance, className = '' }: PortfolioChar
         {/* Zero-Balance Baseline Overlay Message */}
         {isZeroBalance && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-4 text-center">
-            <div className="max-w-md p-4 rounded-2xl bg-[var(--card-bg)]/85 border border-[var(--card-border)] backdrop-blur-md shadow-lg flex items-center gap-3">
+            <div className="max-w-md p-4 rounded-none bg-white border border-black flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
                 <Sparkles size={18} className="text-emerald-500" />
               </div>
