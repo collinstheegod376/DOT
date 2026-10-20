@@ -1,7 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { TrendingUp, TrendingDown, Copy, Check, ArrowUpRight, ArrowDownLeft, QrCode } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  Copy,
+  Check,
+  ArrowUpRight,
+  ArrowDownLeft,
+  QrCode,
+  RefreshCw,
+} from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
 import { SUPPORTED_CHAINS } from '@/lib/constants';
 import { SupportedChainId } from '@/types/wallet';
@@ -13,7 +22,15 @@ interface BalanceCardsProps {
 }
 
 export function BalanceCards({ onSend, onReceive, onViewQr }: BalanceCardsProps) {
-  const { selectedChains, balances, totalFiatBalance, addresses } = useWallet();
+  const {
+    selectedChains,
+    balances,
+    totalFiatBalance,
+    addresses,
+    isRefreshingBalances,
+    refreshBalances,
+    isOnline,
+  } = useWallet();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleCopy = (id: string, text: string) => {
@@ -41,11 +58,21 @@ export function BalanceCards({ onSend, onReceive, onViewQr }: BalanceCardsProps)
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-center">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-800/40 text-emerald-400 text-xs font-mono">
-              <TrendingUp size={14} />
-              <span>+2.45% (24h)</span>
-            </div>
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+            {/* Live Refresh Trigger Button */}
+            <button
+              onClick={refreshBalances}
+              disabled={isRefreshingBalances || !isOnline}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-mono transition cursor-pointer disabled:opacity-50"
+              title={isOnline ? 'Refresh On-Chain Balances' : 'Wallet offline'}
+            >
+              <RefreshCw
+                size={13}
+                className={isRefreshingBalances ? 'animate-spin text-cyan-400' : 'text-zinc-400'}
+              />
+              <span>{isRefreshingBalances ? 'Syncing...' : 'Refresh'}</span>
+            </button>
+
             <div className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs font-mono">
               <span>{selectedChains.length} Chains Active</span>
             </div>
@@ -64,6 +91,7 @@ export function BalanceCards({ onSend, onReceive, onViewQr }: BalanceCardsProps)
             rawAddress.length > 18
               ? `${rawAddress.slice(0, 8)}...${rawAddress.slice(-6)}`
               : rawAddress;
+          const isZeroBalance = parseFloat(bal?.balance || '0') === 0;
 
           return (
             <div
@@ -108,11 +136,19 @@ export function BalanceCards({ onSend, onReceive, onViewQr }: BalanceCardsProps)
                 {/* Balance amounts */}
                 <div className="my-3">
                   <div className="text-2xl font-bold font-mono text-white tracking-tight">
-                    {bal?.balance || '0.00'} <span className="text-xs text-zinc-400 font-normal">{chain.symbol}</span>
+                    {bal?.balance || '0.0000'} <span className="text-xs text-zinc-400 font-normal">{chain.symbol}</span>
                   </div>
                   <div className="text-xs text-zinc-400 font-mono mt-0.5">
                     ≈ ${bal?.fiatValueUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'} USD
                   </div>
+
+                  {/* Clean State Notice if Balance is 0.00 */}
+                  {isZeroBalance && (
+                    <div className="mt-2.5 text-[11px] text-cyan-300 bg-cyan-950/40 border border-cyan-800/40 rounded-xl px-2.5 py-1.5 font-mono flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
+                      <span>Vault active. Deposit funds to this address to get started.</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Truncated Address Bar with Copy & QR */}

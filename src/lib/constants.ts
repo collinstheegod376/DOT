@@ -42,25 +42,26 @@ export const STORAGE_KEYS = {
   TRANSACTION_HISTORY: 'dot_tx_history',
   SELECTED_CHAINS: 'dot_selected_chains',
   ACTIVE_NETWORK: 'dot_active_network',
+  PUBLIC_ADDRESSES: 'dot_public_addresses',
 };
 
 export const SAMPLE_INITIAL_BALANCES = {
   ethereum: {
-    balance: '2.458',
+    balance: '0.0000',
     tokenPriceUsd: 3120.40,
-    fiatValueUsd: 7670.02,
-    change24hPercent: 3.42,
+    fiatValueUsd: 0.00,
+    change24hPercent: 0.0,
   },
   bitcoin: {
-    balance: '0.1420',
+    balance: '0.0000',
     tokenPriceUsd: 68450.00,
-    fiatValueUsd: 9719.90,
-    change24hPercent: 1.85,
+    fiatValueUsd: 0.00,
+    change24hPercent: 0.0,
   },
   solana: {
-    balance: '18.75',
+    balance: '0.0000',
     tokenPriceUsd: 154.20,
-    fiatValueUsd: 2891.25,
-    change24hPercent: -0.65,
+    fiatValueUsd: 0.00,
+    change24hPercent: 0.0,
   },
 };

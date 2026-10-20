@@ -1,5 +1,5 @@
 import { get, set, del } from 'idb-keyval';
-import { Dot1BackupEnvelope, SupportedChainId, TransactionRecord } from '@/types/wallet';
+import { AddressInfo, Dot1BackupEnvelope, SupportedChainId, TransactionRecord } from '@/types/wallet';
 import { STORAGE_KEYS } from './constants';
 
 export async function isVaultInitialized(): Promise<boolean> {
@@ -44,6 +44,21 @@ export async function loadSelectedChains(): Promise<SupportedChainId[] | null> {
   }
 }
 
+export async function savePublicAddresses(addresses: Record<SupportedChainId, AddressInfo>): Promise<void> {
+  if (typeof window === 'undefined') return;
+  await set(STORAGE_KEYS.PUBLIC_ADDRESSES, addresses);
+}
+
+export async function loadPublicAddresses(): Promise<Record<SupportedChainId, AddressInfo> | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const addrs = await get<Record<SupportedChainId, AddressInfo>>(STORAGE_KEYS.PUBLIC_ADDRESSES);
+    return addrs || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function saveTransactions(txs: TransactionRecord[]): Promise<void> {
   if (typeof window === 'undefined') return;
   await set(STORAGE_KEYS.TRANSACTION_HISTORY, txs);
@@ -64,5 +79,6 @@ export async function resetVaultStorage(): Promise<void> {
   await del(STORAGE_KEYS.VAULT_ENVELOPE);
   await del(STORAGE_KEYS.VAULT_INITIALIZED);
   await del(STORAGE_KEYS.SELECTED_CHAINS);
+  await del(STORAGE_KEYS.PUBLIC_ADDRESSES);
   await del(STORAGE_KEYS.TRANSACTION_HISTORY);
 }

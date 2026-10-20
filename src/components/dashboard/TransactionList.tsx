@@ -102,8 +102,11 @@ export function TransactionList() {
 
       {/* Transaction List */}
       {filtered.length === 0 ? (
-        <div className="py-12 text-center text-zinc-500 font-mono text-xs">
-          No transactions found for this filter.
+        <div className="py-12 text-center text-zinc-500 font-mono text-xs flex flex-col items-center justify-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-600">
+            <Layers size={14} />
+          </div>
+          <div>{transactions.length === 0 ? 'No transactions yet. Real on-chain activity and offline queues will appear here.' : 'No transactions found for this filter.'}</div>
         </div>
       ) : (
         <div className="space-y-3">

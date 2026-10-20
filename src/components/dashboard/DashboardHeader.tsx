@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Check,
   Radio,
+  RefreshCw,
 } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
 
@@ -27,7 +28,16 @@ const NETWORKS = [
 ];
 
 export function DashboardHeader({ onOpenSettings }: DashboardHeaderProps) {
-  const { isOnline, isAirGapSimulated, toggleAirGapMode, activeNetwork, setActiveNetwork, lockVault } = useWallet();
+  const {
+    isOnline,
+    isAirGapSimulated,
+    toggleAirGapMode,
+    activeNetwork,
+    setActiveNetwork,
+    lockVault,
+    isRefreshingBalances,
+    refreshBalances,
+  } = useWallet();
   const [networkDropdownOpen, setNetworkDropdownOpen] = useState(false);
 
   return (
@@ -92,6 +102,20 @@ export function DashboardHeader({ onOpenSettings }: DashboardHeaderProps) {
               </div>
             )}
           </div>
+
+          {/* Quick Refresh Balances Button */}
+          <button
+            onClick={refreshBalances}
+            disabled={isRefreshingBalances || !isOnline}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#14141C] border border-[#272732] hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-medium transition cursor-pointer disabled:opacity-50"
+            title={isOnline ? 'Refresh On-Chain Balances' : 'Wallet offline'}
+          >
+            <RefreshCw
+              size={13}
+              className={isRefreshingBalances ? 'animate-spin text-cyan-400' : 'text-zinc-400'}
+            />
+            <span className="hidden lg:inline">{isRefreshingBalances ? 'Syncing...' : 'Sync'}</span>
+          </button>
 
           {/* Online / Air-Gap Mode Badge (Interactive test toggle) */}
           <button

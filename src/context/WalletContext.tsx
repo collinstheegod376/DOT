@@ -18,14 +18,17 @@ import {
 } from '@/lib/crypto';
 import {
   isVaultInitialized,
+  loadPublicAddresses,
   loadSelectedChains,
   loadTransactions,
   loadVaultEnvelope,
   resetVaultStorage,
+  savePublicAddresses,
   saveSelectedChains,
   saveTransactions,
   saveVaultEnvelope,
 } from '@/lib/storage';
+import { fetchLiveChainBalances } from '@/lib/rpc/balance';
 
 interface WalletContextType {
   isInitialized: boolean;
@@ -43,7 +46,9 @@ interface WalletContextType {
   totalFiatBalance: number;
   transactions: TransactionRecord[];
   latestEnvelope: Dot1BackupEnvelope | null;
+  isRefreshingBalances: boolean;
   // Actions
+  refreshBalances: () => Promise<void>;
   toggleAirGapMode: () => void;
   setActiveNetwork: (net: string) => void;
   setSelectedChains: (chains: SupportedChainId[]) => void;
@@ -71,51 +76,6 @@ interface WalletContextType {
 
 const WalletContext = createContext<WalletContextType | null>(null);
 
-const DEFAULT_SAMPLE_TXS: TransactionRecord[] = [
-  {
-    id: 'tx-evm-1',
-    chainId: 'ethereum',
-    hash: '0x3a9f0291e7c5b1284d7a86f7b19810a9cf18e7e17cb95a3ecf48201ad84c19a8',
-    type: 'send',
-    amount: '0.45 ETH',
-    fiatValueUsd: 1404.18,
-    from: '0x71C...4982',
-    to: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
-    timestamp: Date.now() - 3600 * 1000 * 2, // 2h ago
-    status: 'confirmed',
-    fee: '0.0018 ETH',
-    note: 'Vitalik donation / Gitcoin grant',
-  },
-  {
-    id: 'tx-btc-1',
-    chainId: 'bitcoin',
-    hash: '4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b',
-    type: 'receive',
-    amount: '0.05 BTC',
-    fiatValueUsd: 3422.50,
-    from: 'bc1q9x...92kd',
-    to: 'bc1q7y...39lk',
-    timestamp: Date.now() - 3600 * 1000 * 7, // 7h ago
-    status: 'confirmed',
-    fee: '0.00004 BTC',
-    note: 'Inbound settlement',
-  },
-  {
-    id: 'tx-offline-1',
-    chainId: 'ethereum',
-    hash: '0xpending...queued',
-    type: 'contract_call',
-    amount: '0.10 ETH',
-    fiatValueUsd: 312.04,
-    from: '0x71C...4982',
-    to: '0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640',
-    timestamp: Date.now() - 1000 * 60 * 15, // 15m ago
-    status: 'queued_offline',
-    fee: '0.0022 ETH',
-    note: 'Uniswap V3 Swap Intent (Signed Air-Gap)',
-  },
-];
-
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isLocked, setIsLocked] = useState<boolean>(false);
@@ -132,8 +92,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [hasPasswordFallback, setHasPasswordFallback] = useState<boolean>(false);
   const [latestEnvelope, setLatestEnvelope] = useState<Dot1BackupEnvelope | null>(null);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [isRefreshingBalances, setIsRefreshingBalances] = useState<boolean>(false);
 
-  // Balances state
+  // Clean Balances state (defaults to 0.0000)
   const [balances, setBalances] = useState<Record<SupportedChainId, ChainBalance>>(() => {
     const map = {} as Record<SupportedChainId, ChainBalance>;
     for (const id of INITIAL_CHAINS) {
@@ -177,10 +138,14 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
             setHasPasswordFallback(true);
             setHasPasskey(true);
           }
+          const loadedAddresses = await loadPublicAddresses();
+          if (loadedAddresses) {
+            setAddresses(loadedAddresses);
+          }
           const loadedTxs = await loadTransactions();
-          setTransactions(loadedTxs.length > 0 ? loadedTxs : DEFAULT_SAMPLE_TXS);
+          setTransactions(loadedTxs || []);
         } else {
-          setTransactions(DEFAULT_SAMPLE_TXS);
+          setTransactions([]);
         }
       } catch (err) {
         console.error('Error loading vault storage:', err);
@@ -196,6 +161,63 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
     return sum;
   }, 0);
+
+  // Live balance fetcher
+  const refreshBalances = useCallback(async () => {
+    const effectiveOnline = isOnline && !isAirGapSimulated;
+    if (!effectiveOnline) return;
+    if (Object.keys(addresses).length === 0) return;
+
+    setIsRefreshingBalances(true);
+    try {
+      const updated = await fetchLiveChainBalances(addresses, balances);
+      setBalances(updated);
+    } catch (err) {
+      console.warn('[WalletContext] refreshBalances error:', err);
+    } finally {
+      setIsRefreshingBalances(false);
+    }
+  }, [isOnline, isAirGapSimulated, addresses, balances]);
+
+  // Trigger live balance fetching when wallet initialized, unlocked, or addresses change
+  useEffect(() => {
+    if (!isInitialized || isLocked) return;
+    const effectiveOnline = isOnline && !isAirGapSimulated;
+    if (!effectiveOnline) return;
+    if (Object.keys(addresses).length === 0) return;
+
+    let isMounted = true;
+    fetchLiveChainBalances(addresses, balances)
+      .then((updated) => {
+        if (isMounted) {
+          setBalances(updated);
+        }
+      })
+      .catch((err) => {
+        console.warn('[WalletContext] Auto-fetch balances error:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isInitialized, isLocked, addresses, isOnline, isAirGapSimulated]);
+
+  // Auto-refresh interval (every 30 seconds when window is active and wallet is online)
+  useEffect(() => {
+    if (!isInitialized || isLocked) return;
+    const effectiveOnline = isOnline && !isAirGapSimulated;
+    if (!effectiveOnline) return;
+    if (Object.keys(addresses).length === 0) return;
+
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) {
+        return; // Pause auto-refresh when tab is not focused/visible
+      }
+      refreshBalances();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [isInitialized, isLocked, isOnline, isAirGapSimulated, addresses, refreshBalances]);
 
   const toggleAirGapMode = useCallback(() => {
     setIsAirGapSimulated((prev) => !prev);
@@ -219,7 +241,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
       await saveVaultEnvelope(envelope);
       await saveSelectedChains(chains);
-      await saveTransactions(DEFAULT_SAMPLE_TXS);
+      await savePublicAddresses(derived);
+      await saveTransactions([]);
 
       setLatestEnvelope(envelope);
       setAddresses(derived);
@@ -230,7 +253,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setHasPasswordFallback(true);
       setIsInitialized(true);
       setIsLocked(false);
-      setTransactions(DEFAULT_SAMPLE_TXS);
+      setTransactions([]);
     },
     []
   );
@@ -264,11 +287,15 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       const result = await registerPasskeyWithPrf();
       if (result.credentialId) {
         setIsLocked(false);
-        // If addresses aren't loaded yet, reconstruct mock addresses from constants
         if (Object.keys(addresses).length === 0) {
-          const sampleMnemonic = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
-          const derived = deriveAddressesFromMnemonic(sampleMnemonic, selectedChains);
-          setAddresses(derived);
+          const loaded = await loadPublicAddresses();
+          if (loaded) {
+            setAddresses(loaded);
+          } else {
+            const sampleMnemonic = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+            const derived = deriveAddressesFromMnemonic(sampleMnemonic, selectedChains);
+            setAddresses(derived);
+          }
         }
         return true;
       }
@@ -288,6 +315,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       if (decrypted) {
         const derived = deriveAddressesFromMnemonic(decrypted.mnemonic, decrypted.chains);
         const derivedPriv = derivePrivateKeys(decrypted.mnemonic, decrypted.chains);
+        await savePublicAddresses(derived);
         setAddresses(derived);
         setMnemonicPhrase(decrypted.mnemonic);
         setPrivateKeys(derivedPriv);
@@ -308,6 +336,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setLatestEnvelope(null);
     setAddresses({} as Record<SupportedChainId, AddressInfo>);
     setSelectedChainsState(INITIAL_CHAINS);
+    setTransactions([]);
   }, []);
 
   const sendTransaction = useCallback(
@@ -342,9 +371,16 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         };
       });
 
+      // Refresh on-chain balances shortly after sending if online
+      if (effectiveOnline) {
+        setTimeout(() => {
+          refreshBalances();
+        }, 3000);
+      }
+
       return newTx;
     },
-    [isOnline, isAirGapSimulated, transactions]
+    [isOnline, isAirGapSimulated, transactions, refreshBalances]
   );
 
   return (
@@ -365,6 +401,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         totalFiatBalance,
         transactions,
         latestEnvelope,
+        isRefreshingBalances,
+        refreshBalances,
         toggleAirGapMode,
         setActiveNetwork,
         setSelectedChains,
