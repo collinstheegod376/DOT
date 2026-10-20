@@ -12,7 +12,6 @@ import {
   Check,
   QrCode,
   ExternalLink,
-  ShieldCheck,
 } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
 
@@ -222,17 +221,6 @@ export function HeroPortfolio({
           <rect x="497" y="17" width="6" height="6" fill="currentColor" className="text-black dark:text-white" />
         </svg>
       </div>
-
-      {/* Zero balance indicator */}
-      {parseFloat(solBalance) === 0 && totalFiatBalance === 0 && (
-        <div className="p-3.5 rounded-none border border-black/10 dark:border-[#353536] bg-[#F7F7F7] dark:bg-[#1D1D1E] mb-6 flex items-start gap-3">
-          <ShieldCheck size={16} className="text-black dark:text-white shrink-0 mt-0.5" />
-          <div className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 font-sans">
-            <span className="font-black text-black dark:text-white uppercase tracking-wider">Vault Ready:</span> On-chain balance verified at $0.00.
-            Deposit SOL or supported assets to your Solana address to activate portfolio monitoring.
-          </div>
-        </div>
-      )}
 
       {/* Action Buttons Grid with sharp 0px borders and 48px touch targets */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Wifi, WifiOff, ArrowUpRight } from 'lucide-react';
+import { Wifi, ArrowUpRight } from 'lucide-react';
 import { registerServiceWorker } from '../../lib/offline/sw-register';
 import { registerOnlineSync, getPendingTxs } from '../../lib/offline/queue';
 import { DotTx } from '../../lib/offline/dot-tx';
@@ -51,14 +51,6 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-
-      {/* Offline Status Pill */}
-      {isOffline && (
-        <div className="fixed bottom-4 left-4 z-40 flex items-center gap-2 rounded-full bg-red-950/90 border border-red-500/30 px-3.5 py-1.5 text-xs text-red-200 shadow-xl backdrop-blur-md animate-fade-in">
-          <WifiOff className="h-3.5 w-3.5 text-red-400" />
-          <span className="font-medium">Air-Gap / Offline Mode Active</span>
-        </div>
-      )}
 
       {/* Online Sync Auto-Prompt */}
       {showSyncPrompt && pendingTxs.length > 0 && (

@@ -15,7 +15,7 @@ import {
   base,
   polygon,
 } from 'viem/chains';
-import { SupportedChainId, ChainBalance, SplTokenBalance } from '@/types/wallet';
+import { SupportedChainId, ChainBalance, SplTokenBalance, TransactionRecord } from '@/types/wallet';
 import { fetchSplTokenBalances } from '@/lib/chains/spl';
 
 /**
@@ -385,6 +385,158 @@ export async function fetchSolanaBalance(
   }
 
   return { balance: '0.00', status: 'error' };
+}
+
+/**
+ * Queries on-chain transaction history for a Solana address.
+ * Accurately parses incoming and outgoing SOL transfers directly from Solana RPC.
+ */
+export async function fetchSolanaTransactions(
+  address: string,
+  solPriceUsd = 154.20,
+  activeNetwork = 'Solana Mainnet-Beta'
+): Promise<TransactionRecord[]> {
+  if (isClientOffline()) return [];
+  if (!address || address.length < 32) return [];
+
+  const endpoints = activeNetwork.includes('Devnet')
+    ? ['https://api.devnet.solana.com']
+    : activeNetwork.includes('Testnet')
+    ? ['https://api.testnet.solana.com']
+    : SOLANA_RPC_FALLBACKS;
+
+  for (const rpcUrl of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      const sigRes = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getSignaturesForAddress',
+          params: [address, { limit: 12 }],
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!sigRes.ok) continue;
+      const sigData = await sigRes.json();
+      const rawSignatures = sigData?.result;
+
+      if (!Array.isArray(rawSignatures) || rawSignatures.length === 0) {
+        return [];
+      }
+
+      const txRecords: TransactionRecord[] = [];
+      const batch = rawSignatures.slice(0, 10);
+
+      await Promise.all(
+        batch.map(async (sigObj: { signature: string; blockTime?: number; err?: unknown }) => {
+          try {
+            const txSig = sigObj.signature;
+            const txController = new AbortController();
+            const txTimeout = setTimeout(() => txController.abort(), 6000);
+
+            const txRes = await fetch(rpcUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 1,
+                method: 'getTransaction',
+                params: [
+                  txSig,
+                  { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 },
+                ],
+              }),
+              signal: txController.signal,
+            });
+            clearTimeout(txTimeout);
+
+            if (!txRes.ok) return;
+            const txJson = await txRes.json();
+            const txResult = txJson?.result;
+            if (!txResult) return;
+
+            const meta = txResult.meta;
+            const transaction = txResult.transaction;
+            const message = transaction?.message;
+            const rawAccountKeys = message?.accountKeys || [];
+
+            // Account keys can be strings or objects with pubkey property
+            const accountKeys: string[] = rawAccountKeys.map((k: string | { pubkey: string }) =>
+              typeof k === 'string' ? k : k?.pubkey || ''
+            );
+
+            const addrIndex = accountKeys.indexOf(address);
+            if (addrIndex === -1 || !meta?.preBalances || !meta?.postBalances) {
+              return;
+            }
+
+            const preLamports = meta.preBalances[addrIndex] ?? 0;
+            const postLamports = meta.postBalances[addrIndex] ?? 0;
+            const diffLamports = postLamports - preLamports;
+            const feeLamports = meta.fee || 5000;
+            const feeSol = (feeLamports / 1e9).toFixed(5);
+
+            let type: 'send' | 'receive' = 'receive';
+            let amountSol = 0;
+
+            if (diffLamports > 0) {
+              type = 'receive';
+              amountSol = diffLamports / 1e9;
+            } else if (diffLamports < 0) {
+              type = 'send';
+              const netDebit = Math.abs(diffLamports);
+              amountSol = addrIndex === 0 && netDebit >= feeLamports ? (netDebit - feeLamports) / 1e9 : netDebit / 1e9;
+            } else {
+              type = 'receive';
+              amountSol = 0;
+            }
+
+            const timestamp = (txResult.blockTime || sigObj.blockTime || Math.floor(Date.now() / 1000)) * 1000;
+            const fromAddr = type === 'send' ? address : accountKeys[0] || 'Unknown';
+            const toAddr = type === 'send' ? accountKeys[1] || 'Recipient' : address;
+
+            txRecords.push({
+              id: txSig,
+              chainId: 'solana',
+              hash: txSig,
+              type,
+              amount: amountSol > 0 ? formatCryptoBalance(amountSol) : '0.00',
+              fiatValueUsd: amountSol * solPriceUsd,
+              from: fromAddr,
+              to: toAddr,
+              timestamp,
+              status: meta.err ? 'pending' : 'confirmed',
+              fee: feeSol,
+            });
+          } catch {
+            // Ignore individual transaction fetch errors
+          }
+        })
+      );
+
+      txRecords.sort((a, b) => b.timestamp - a.timestamp);
+      if (txRecords.length > 0) {
+        return txRecords;
+      }
+    } catch (err) {
+      console.warn(`[DOT RPC] fetchSolanaTransactions on ${rpcUrl} failed:`, err);
+    }
+  }
+
+  return [];
 }
 
 // ============================================================================

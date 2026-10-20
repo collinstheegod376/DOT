@@ -1,11 +1,12 @@
 /**
  * DOT Sovereign Offline Service Worker
  * 
- * Enforces offline-first caching for the complete app shell.
- * Guarantees that DOT works flawlessly with zero internet access.
+ * Enforces offline capability for the complete app shell.
+ * Uses Network-First with Offline-Cache Fallback to guarantee DOT works
+ * with zero internet access while preventing stale chunk / HMR corruption.
  */
 
-const CACHE_NAME = 'dot-sovereign-v1';
+const CACHE_NAME = 'dot-sovereign-v2';
 
 // App shell core assets to pre-cache
 const STATIC_ASSETS = [
@@ -15,13 +16,14 @@ const STATIC_ASSETS = [
   '/favicon.ico',
 ];
 
-// Installation: Cache core app shell and skip waiting
+// Installation: Cache core app shell and skip waiting immediately
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Use addAll with error resilience
       return Promise.allSettled(
-        STATIC_ASSETS.map((asset) => cache.add(asset).catch((err) => console.warn(`[SW] Precache failed for ${asset}:`, err)))
+        STATIC_ASSETS.map((asset) =>
+          cache.add(asset).catch((err) => console.warn(`[SW] Precache failed for ${asset}:`, err))
+        )
       );
     }).then(() => {
       return self.skipWaiting();
@@ -29,14 +31,17 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activation: Clean up stale legacy caches and claim clients immediately
+// Activation: Clean up all legacy / stale caches and claim clients immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name.startsWith('dot-') && name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => {
+            console.log(`[SW] Purging outdated cache: ${name}`);
+            return caches.delete(name);
+          })
       );
     }).then(() => {
       return self.clients.claim();
@@ -44,72 +49,51 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: Offline-first cache strategy with network fallback
+// Fetch: Network-first with Cache-fallback for all assets
 self.addEventListener('fetch', (event) => {
   const request = event.request;
 
-  // Only handle HTTP/HTTPS requests
-  if (!request.url.startsWith('http')) return;
-
-  // Only handle GET requests (prevents TypeError on POST/PUT/DELETE)
-  if (request.method !== 'GET') return;
-
-  // For HTML navigation requests, try cache first, then network, then fallback
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        if (cachedResponse) {
-          // Revalidate in background if online
-          fetch(request).then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse));
-            }
-          }).catch(() => {
-            // Offline - ignore background refresh error
-          });
-          return cachedResponse;
-        }
-
-        return fetch(request)
-          .then((response) => {
-            if (response && response.status === 200) {
-              const responseToCache = response.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache));
-            }
-            return response;
-          })
-          .catch(() => {
-            // Fallback to cached root or decryptor if offline
-            return caches.match('/') || caches.match('/decryptor.html');
-          });
-      })
-    );
+  // Only handle HTTP/HTTPS GET requests
+  if (!request.url.startsWith('http') || request.method !== 'GET') {
     return;
   }
 
-  // Cache-first for scripts, styles, fonts, and images
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+  // Bypass dev HMR and WebSockets
+  if (request.url.includes('/_next/webpack-hmr') || request.url.includes('turbopack-hmr')) {
+    return;
+  }
 
-      return fetch(request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
+  event.respondWith(
+    fetch(request)
+      .then((networkResponse) => {
+        // If response is valid, update the cache in the background
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache).catch(() => {});
+          });
+        }
+        return networkResponse;
+      })
+      .catch(async () => {
+        // Offline: Serve from cache
+        const cachedResponse = await caches.match(request);
+        if (cachedResponse) {
+          return cachedResponse;
         }
 
-        const responseToCache = networkResponse.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, responseToCache);
-        });
+        // If navigation request and not in cache, fallback to root or decryptor
+        if (request.mode === 'navigate') {
+          const fallback = (await caches.match('/')) || (await caches.match('/decryptor.html'));
+          if (fallback) return fallback;
+        }
 
-        return networkResponse;
-      }).catch((err) => {
-        // Return offline fallback response if asset not found
-        console.warn('[SW] Offline asset fetch failed:', request.url);
-        throw err;
-      });
-    })
+        // Return empty or error response gracefully if completely unavailable offline
+        return new Response('Offline: Asset not available in cache', {
+          status: 503,
+          statusText: 'Service Unavailable (Offline)',
+          headers: new Headers({ 'Content-Type': 'text/plain' }),
+        });
+      })
   );
 });

@@ -19,6 +19,7 @@ export function registerServiceWorker(onUpdate?: () => void): Promise<ServiceWor
     .register('/sw.js')
     .then((registration) => {
       console.log('[DOT SW] Service Worker registered successfully:', registration.scope);
+      registration.update().catch(() => {});
 
       // Check for updates
       registration.onupdatefound = () => {

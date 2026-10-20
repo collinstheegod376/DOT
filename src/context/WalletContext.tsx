@@ -37,7 +37,7 @@ import {
   saveTransactions,
   saveVaultEnvelope,
 } from '@/lib/storage';
-import { fetchLiveChainBalances } from '@/lib/rpc/balance';
+import { fetchLiveChainBalances, fetchSolanaTransactions } from '@/lib/rpc/balance';
 
 interface WalletContextType {
   isInitialized: boolean;
@@ -244,12 +244,37 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         setTokens(updatedTokens);
         await saveCachedTokens(updatedTokens);
       }
+
+      // Sync on-chain transactions for Solana address
+      const solAddr = addresses.solana?.address || '';
+      if (solAddr) {
+        fetchSolanaTransactions(solAddr, updated.solana?.tokenPriceUsd || 154.20, activeNetwork)
+          .then((onChainTxs) => {
+            if (onChainTxs && onChainTxs.length > 0) {
+              setTransactions((prev) => {
+                const map = new Map<string, TransactionRecord>();
+                for (const t of onChainTxs) {
+                  map.set(t.hash, t);
+                }
+                for (const t of prev) {
+                  if (t.status === 'queued_offline' && !map.has(t.hash)) {
+                    map.set(t.hash, t);
+                  }
+                }
+                const merged = Array.from(map.values()).sort((a, b) => b.timestamp - a.timestamp);
+                saveTransactions(merged).catch(() => {});
+                return merged;
+              });
+            }
+          })
+          .catch((err) => console.warn('[WalletContext] Failed to fetch on-chain transactions:', err));
+      }
     } catch (err) {
       console.warn('[WalletContext] refreshBalances error:', err);
     } finally {
       setIsRefreshingBalances(false);
     }
-  }, [isOnline, isAirGapSimulated, addresses, balances]);
+  }, [isOnline, isAirGapSimulated, addresses, balances, activeNetwork]);
 
   // Trigger live balance fetching when wallet initialized, unlocked, or addresses change
   useEffect(() => {
@@ -317,6 +342,31 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
               await saveCachedTokens(updatedTokens);
             }
           }
+
+          // Also trigger on-chain transaction sync
+          const solAddr = addresses.solana?.address || '';
+          if (solAddr) {
+            fetchSolanaTransactions(solAddr, updated.solana?.tokenPriceUsd || 154.20, activeNetwork)
+              .then((onChainTxs) => {
+                if (isMounted && onChainTxs && onChainTxs.length > 0) {
+                  setTransactions((prev) => {
+                    const map = new Map<string, TransactionRecord>();
+                    for (const t of onChainTxs) {
+                      map.set(t.hash, t);
+                    }
+                    for (const t of prev) {
+                      if (t.status === 'queued_offline' && !map.has(t.hash)) {
+                        map.set(t.hash, t);
+                      }
+                    }
+                    const merged = Array.from(map.values()).sort((a, b) => b.timestamp - a.timestamp);
+                    saveTransactions(merged).catch(() => {});
+                    return merged;
+                  });
+                }
+              })
+              .catch(() => {});
+          }
         }
       })
       .catch((err) => {
@@ -326,7 +376,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return () => {
       isMounted = false;
     };
-  }, [isInitialized, isLocked, addresses, isOnline, isAirGapSimulated]);
+  }, [isInitialized, isLocked, addresses, isOnline, isAirGapSimulated, activeNetwork]);
 
   // Auto-refresh interval (every 30 seconds when window is active and wallet is online)
   useEffect(() => {
