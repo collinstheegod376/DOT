@@ -49,6 +49,28 @@ export async function loadSelectedChains(): Promise<SupportedChainId[] | null> {
   }
 }
 
+export async function saveActiveNetwork(networkId: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_NETWORK, networkId);
+  } catch {}
+  await set(STORAGE_KEYS.ACTIVE_NETWORK, networkId);
+}
+
+export async function loadActiveNetwork(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const fromLocal = localStorage.getItem(STORAGE_KEYS.ACTIVE_NETWORK);
+    if (fromLocal) return fromLocal;
+  } catch {}
+  try {
+    const net = await get<string>(STORAGE_KEYS.ACTIVE_NETWORK);
+    return net || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function savePublicAddresses(addresses: Record<SupportedChainId, AddressInfo>): Promise<void> {
   assertZeroPlaintextSecrets(addresses, 'publicAddresses');
   if (typeof window === 'undefined') return;

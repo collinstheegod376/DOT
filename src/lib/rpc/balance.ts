@@ -325,18 +325,38 @@ export async function fetchBitcoinBalance(
 // Solana Balance Fetcher (JSON-RPC getBalance)
 // ============================================================================
 
-const SOLANA_RPC_FALLBACKS = [
+export const SOLANA_RPC_FALLBACKS = [
   'https://api.mainnet-beta.solana.com',
   'https://rpc.ankr.com/solana',
   'https://solana-rpc.publicnode.com',
 ];
+
+export const SOLANA_CLUSTER_RPCS: Record<string, string[]> = {
+  'Solana Devnet': ['https://api.devnet.solana.com'],
+  'Solana Testnet': ['https://api.testnet.solana.com'],
+  'Solana Mainnet-Beta': SOLANA_RPC_FALLBACKS,
+};
+
+export function getSolanaRpcEndpoints(activeNetwork = 'Solana Mainnet-Beta'): string[] {
+  if (SOLANA_CLUSTER_RPCS[activeNetwork]) {
+    return SOLANA_CLUSTER_RPCS[activeNetwork];
+  }
+  if (activeNetwork.includes('Devnet')) {
+    return SOLANA_CLUSTER_RPCS['Solana Devnet'];
+  }
+  if (activeNetwork.includes('Testnet')) {
+    return SOLANA_CLUSTER_RPCS['Solana Testnet'];
+  }
+  return SOLANA_RPC_FALLBACKS;
+}
 
 /**
  * Queries live balance from public Solana RPC using JSON-RPC `getBalance`.
  * Balance formatted in SOL (lamports / 1e9).
  */
 export async function fetchSolanaBalance(
-  address: string
+  address: string,
+  activeNetwork = 'Solana Mainnet-Beta'
 ): Promise<{ balance: string; status: 'online' | 'offline' | 'rate_limited' | 'error' }> {
   if (isClientOffline()) {
     return { balance: '0.00', status: 'offline' };
@@ -346,7 +366,9 @@ export async function fetchSolanaBalance(
     return { balance: '0.00', status: 'error' };
   }
 
-  for (const rpcUrl of SOLANA_RPC_FALLBACKS) {
+  const endpoints = getSolanaRpcEndpoints(activeNetwork);
+
+  for (const rpcUrl of endpoints) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000);
@@ -399,11 +421,7 @@ export async function fetchSolanaTransactions(
   if (isClientOffline()) return [];
   if (!address || address.length < 32) return [];
 
-  const endpoints = activeNetwork.includes('Devnet')
-    ? ['https://api.devnet.solana.com']
-    : activeNetwork.includes('Testnet')
-    ? ['https://api.testnet.solana.com']
-    : SOLANA_RPC_FALLBACKS;
+  const endpoints = getSolanaRpcEndpoints(activeNetwork);
 
   for (const rpcUrl of endpoints) {
     try {
@@ -675,7 +693,10 @@ export async function fetchCryptoPrices(): Promise<Record<string, TokenPriceData
  * Fetches live USD prices for SOL and SPL tokens (USDC = $1.00, USDT = $1.00, JUP/RAY/BONK/PYTH via live API).
  * Computes total portfolio USD value (SOL fiat value + sum of all SPL token fiat values).
  */
-export async function fetchSolanaPortfolio(address: string): Promise<SolanaPortfolioResult> {
+export async function fetchSolanaPortfolio(
+  address: string,
+  activeNetwork = 'Solana Mainnet-Beta'
+): Promise<SolanaPortfolioResult> {
   if (isClientOffline()) {
     return {
       solBalance: '0.00',
@@ -691,8 +712,8 @@ export async function fetchSolanaPortfolio(address: string): Promise<SolanaPortf
 
   // Fetch SOL balance, SPL token accounts, and live prices concurrently in parallel
   const [solBalanceRes, splTokens, prices] = await Promise.all([
-    fetchSolanaBalance(address),
-    fetchSplTokenBalances(address, true),
+    fetchSolanaBalance(address, activeNetwork),
+    fetchSplTokenBalances(address, true, activeNetwork),
     fetchSolanaAndSplPrices(),
   ]);
 
@@ -749,11 +770,13 @@ export interface ChainBalanceOutput {
  *
  * @param addresses Map of chain ID -> address string or AddressInfo
  * @param existingBalances Optional existing balances map to fall back on if network is unreachable
+ * @param activeNetwork Current active network cluster name (e.g., 'Solana Devnet', 'Solana Mainnet-Beta')
  * @returns Map of chain ID -> { chainId, balance, tokenPriceUsd, fiatValueUsd, change24hPercent, splTokens, totalPortfolioFiatUsd }
  */
 export async function fetchLiveChainBalances(
   addresses: Record<string, string | { address?: string } | undefined>,
-  existingBalances?: Record<string, any>
+  existingBalances?: Record<string, any>,
+  activeNetwork = 'Solana Mainnet-Beta'
 ): Promise<Record<SupportedChainId, ChainBalance>> {
   const result: Record<string, ChainBalance> = {};
   const chainIds = Object.keys(addresses);
@@ -785,7 +808,7 @@ export async function fetchLiveChainBalances(
       const normalizedChain = chainId.toLowerCase();
 
       if (normalizedChain === 'solana') {
-        const portfolio = await fetchSolanaPortfolio(address);
+        const portfolio = await fetchSolanaPortfolio(address, activeNetwork);
         if ((portfolio.status === 'offline' || portfolio.status === 'error') && existingBalances?.['solana']) {
           result['solana'] = existingBalances['solana'];
         } else {

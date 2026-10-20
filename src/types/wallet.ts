@@ -84,6 +84,7 @@ export interface TransactionRecord {
   fee: string;
   note?: string;
   rawPayload?: string;
+  priorityFeeTier?: 'normal' | 'turbo' | 'ultra';
 }
 
 export interface SecurityWarning {

@@ -37,10 +37,24 @@ export function HeroPortfolio({
     isRefreshingBalances,
     refreshBalances,
     isOnline,
+    activeNetwork,
   } = useWallet();
 
   const [copied, setCopied] = useState(false);
   const [timeframe, setTimeframe] = useState<Timeframe>('MONTH');
+
+  // Compute clean cluster badge label
+  const clusterBadge = activeNetwork.includes('Devnet')
+    ? 'DEVNET'
+    : activeNetwork.includes('Testnet')
+    ? 'TESTNET'
+    : 'MAINNET';
+
+  const solscanClusterQuery = activeNetwork.includes('Devnet')
+    ? '?cluster=devnet'
+    : activeNetwork.includes('Testnet')
+    ? '?cluster=testnet'
+    : '';
 
   // Solana info
   const solBalance = balances.solana?.balance || '0.00';
@@ -72,7 +86,7 @@ export function HeroPortfolio({
             SOLANA PORTFOLIO
           </span>
           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-none border border-black dark:border-[#353536] text-black dark:text-white uppercase tracking-widest font-bold">
-            MAINNET
+            [{clusterBadge}]
           </span>
         </div>
 
@@ -102,11 +116,11 @@ export function HeroPortfolio({
             </button>
 
             <a
-              href={`https://solscan.io/account/${solAddress}`}
+              href={`https://solscan.io/account/${solAddress}${solscanClusterQuery}`}
               target="_blank"
               rel="noopener noreferrer"
               className="p-1 rounded-none text-zinc-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
-              title="View on Solscan Explorer"
+              title={`View on Solscan Explorer (${clusterBadge})`}
             >
               <ExternalLink size={13} />
             </a>

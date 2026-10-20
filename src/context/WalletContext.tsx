@@ -8,6 +8,7 @@ import {
   SupportedChainId,
   TokenAsset,
   TransactionRecord,
+  TransactionStatus,
 } from '@/types/wallet';
 import { INITIAL_CHAINS, SAMPLE_INITIAL_BALANCES, SUPPORTED_CHAINS } from '@/lib/constants';
 import { DEFAULT_SOLANA_TOKENS, getLiveTokenAssets } from '@/lib/tokens';
@@ -21,6 +22,7 @@ import {
 } from '@/lib/crypto';
 import {
   isVaultInitialized,
+  loadActiveNetwork,
   loadCachedBalances,
   loadCachedTokens,
   loadPasskeyCredentialId,
@@ -30,6 +32,7 @@ import {
   loadTransactions,
   loadVaultEnvelope,
   resetVaultStorage,
+  saveActiveNetwork,
   saveCachedBalances,
   saveCachedTokens,
   savePublicAddresses,
@@ -37,7 +40,9 @@ import {
   saveTransactions,
   saveVaultEnvelope,
 } from '@/lib/storage';
+import { STORAGE_KEYS } from '@/lib/constants';
 import { fetchLiveChainBalances, fetchSolanaTransactions } from '@/lib/rpc/balance';
+import { buildAndBroadcastSolanaTransfer } from '@/lib/chains/sol-tx';
 
 interface WalletContextType {
   isInitialized: boolean;
@@ -81,7 +86,9 @@ interface WalletContextType {
   unlockWithPasskey: () => Promise<boolean>;
   unlockWithPassword: (password: string) => Promise<boolean>;
   resetVault: () => Promise<void>;
-  sendTransaction: (tx: Omit<TransactionRecord, 'id' | 'timestamp' | 'status'>) => Promise<TransactionRecord>;
+  sendTransaction: (
+    tx: Omit<TransactionRecord, 'id' | 'timestamp' | 'status' | 'hash'> & { hash?: string }
+  ) => Promise<TransactionRecord>;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
@@ -150,6 +157,18 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           setTokens(cachedTok);
         }
 
+        // Hydrate persisted active network (Devnet, Testnet, Mainnet)
+        try {
+          const storedNet =
+            (typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.ACTIVE_NETWORK) : null) ||
+            (await loadActiveNetwork());
+          if (storedNet) {
+            setActiveNetwork(storedNet);
+          }
+        } catch (err) {
+          console.warn('[WalletContext] Failed to load stored active network:', err);
+        }
+
         const initialized = await isVaultInitialized();
         if (initialized) {
           setIsInitialized(true);
@@ -184,14 +203,15 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       : tokens.reduce((sum, t) => sum + (t.fiatValueUsd || 0), 0);
 
   // Live balance fetcher
-  const refreshBalances = useCallback(async () => {
+  const refreshBalances = useCallback(async (networkOverride?: string) => {
     const effectiveOnline = isOnline && !isAirGapSimulated;
     if (!effectiveOnline) return;
     if (Object.keys(addresses).length === 0) return;
 
+    const netToUse = networkOverride || activeNetwork;
     setIsRefreshingBalances(true);
     try {
-      const updated = await fetchLiveChainBalances(addresses, balances);
+      const updated = await fetchLiveChainBalances(addresses, balances, netToUse);
       setBalances(updated);
       await saveCachedBalances(updated);
 
@@ -248,7 +268,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       // Sync on-chain transactions for Solana address
       const solAddr = addresses.solana?.address || '';
       if (solAddr) {
-        fetchSolanaTransactions(solAddr, updated.solana?.tokenPriceUsd || 154.20, activeNetwork)
+        fetchSolanaTransactions(solAddr, updated.solana?.tokenPriceUsd || 154.20, netToUse)
           .then((onChainTxs) => {
             if (onChainTxs && onChainTxs.length > 0) {
               setTransactions((prev) => {
@@ -276,7 +296,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isOnline, isAirGapSimulated, addresses, balances, activeNetwork]);
 
-  // Trigger live balance fetching when wallet initialized, unlocked, or addresses change
+  // Trigger live balance fetching when wallet initialized, unlocked, or network/addresses change
   useEffect(() => {
     if (!isInitialized || isLocked) return;
     const effectiveOnline = isOnline && !isAirGapSimulated;
@@ -284,7 +304,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     if (Object.keys(addresses).length === 0) return;
 
     let isMounted = true;
-    fetchLiveChainBalances(addresses, balances)
+    fetchLiveChainBalances(addresses, balances, activeNetwork)
       .then(async (updated) => {
         if (isMounted) {
           setBalances(updated);
@@ -394,6 +414,22 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
     return () => clearInterval(interval);
   }, [isInitialized, isLocked, isOnline, isAirGapSimulated, addresses, refreshBalances]);
+
+  const handleSetActiveNetwork = useCallback((netId: string) => {
+    setActiveNetwork(netId);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(STORAGE_KEYS.ACTIVE_NETWORK, netId);
+      } catch {}
+    }
+    saveActiveNetwork(netId).catch((err) =>
+      console.warn('[WalletContext] Failed to persist active network:', err)
+    );
+    // Immediately refresh balances using new network cluster
+    refreshBalances(netId).catch((err) =>
+      console.warn('[WalletContext] Failed to refresh balances after network switch:', err)
+    );
+  }, [refreshBalances]);
 
   const toggleAirGapMode = useCallback(() => {
     setIsAirGapSimulated((prev) => !prev);
@@ -551,13 +587,66 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const sendTransaction = useCallback(
-    async (txInput: Omit<TransactionRecord, 'id' | 'timestamp' | 'status'>): Promise<TransactionRecord> => {
+    async (
+      txInput: Omit<TransactionRecord, 'id' | 'timestamp' | 'status' | 'hash'> & { hash?: string }
+    ): Promise<TransactionRecord> => {
       const effectiveOnline = isOnline && !isAirGapSimulated;
-      const status = effectiveOnline ? 'confirmed' : 'queued_offline';
+
+      let finalHash = txInput.hash;
+      let finalFee = txInput.fee || '0.000005 SOL';
+      let status: TransactionStatus = 'queued_offline';
+
+      if (effectiveOnline) {
+        if (!privateKeys?.solana) {
+          throw new Error(
+            'Vault is locked or Solana private key is unavailable in memory. Please unlock your wallet before sending transactions.'
+          );
+        }
+
+        const parsedAmount = parseFloat(txInput.amount) || 0;
+        if (parsedAmount <= 0) {
+          throw new Error('Transaction amount must be greater than zero.');
+        }
+
+        const senderAddress = txInput.from || addresses.solana?.address;
+        if (!senderAddress) {
+          throw new Error('Sender address is not defined.');
+        }
+
+        const recipientAddress = txInput.to;
+        if (!recipientAddress) {
+          throw new Error('Recipient address is required.');
+        }
+
+        // Build, Ed25519-sign, and broadcast real on-chain transaction
+        const result = await buildAndBroadcastSolanaTransfer({
+          senderAddress,
+          recipientAddress,
+          amountSol: parsedAmount,
+          privateKeyHexOrBytes: privateKeys.solana,
+          activeNetwork,
+          priorityFeeTier: txInput.priorityFeeTier || 'normal',
+        });
+
+        finalHash = result.signature;
+        finalFee = `${result.feeSol} SOL`;
+        status = 'confirmed';
+      } else {
+        // Offline: queue with status 'queued_offline'
+        status = 'queued_offline';
+        if (!finalHash) {
+          const randomBytes = crypto.getRandomValues(new Uint8Array(32));
+          finalHash = Array.from(randomBytes)
+            .map((b) => b.toString(16).padStart(2, '0'))
+            .join('');
+        }
+      }
 
       const newTx: TransactionRecord = {
         ...txInput,
         id: 'tx-' + Date.now(),
+        hash: finalHash || '',
+        fee: finalFee,
         timestamp: Date.now(),
         status,
       };
@@ -590,12 +679,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       if (effectiveOnline) {
         setTimeout(() => {
           refreshBalances();
-        }, 3000);
+        }, 2500);
       }
 
       return newTx;
     },
-    [isOnline, isAirGapSimulated, transactions, refreshBalances]
+    [isOnline, isAirGapSimulated, privateKeys, addresses, activeNetwork, transactions, refreshBalances]
   );
 
   return (
@@ -620,7 +709,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         isRefreshingBalances,
         refreshBalances,
         toggleAirGapMode,
-        setActiveNetwork,
+        setActiveNetwork: handleSetActiveNetwork,
         setSelectedChains,
         initializeNewVault,
         restoreVaultFromMnemonic,

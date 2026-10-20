@@ -9,11 +9,34 @@ import { KNOWN_SPL_TOKENS, KNOWN_SPL_TOKENS_BY_MINT } from '@/lib/constants';
 export const TOKEN_PROGRAM_ID = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 export const ASSOCIATED_TOKEN_PROGRAM_ID = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
 
-const SOLANA_RPC_FALLBACKS = [
+export const SOLANA_RPC_FALLBACKS = [
   'https://api.mainnet-beta.solana.com',
   'https://rpc.ankr.com/solana',
   'https://solana-rpc.publicnode.com',
 ];
+
+export const SOLANA_CLUSTER_RPCS: Record<string, string[]> = {
+  'Solana Devnet': ['https://api.devnet.solana.com'],
+  'Solana Testnet': ['https://api.testnet.solana.com'],
+  'Solana Mainnet-Beta': SOLANA_RPC_FALLBACKS,
+};
+
+function resolveClusterRpcEndpoints(networkOrUrl?: string): string[] {
+  if (!networkOrUrl) return SOLANA_RPC_FALLBACKS;
+  if (SOLANA_CLUSTER_RPCS[networkOrUrl]) {
+    return SOLANA_CLUSTER_RPCS[networkOrUrl];
+  }
+  if (networkOrUrl.includes('Devnet')) {
+    return SOLANA_CLUSTER_RPCS['Solana Devnet'];
+  }
+  if (networkOrUrl.includes('Testnet')) {
+    return SOLANA_CLUSTER_RPCS['Solana Testnet'];
+  }
+  if (networkOrUrl.startsWith('http://') || networkOrUrl.startsWith('https://')) {
+    return [networkOrUrl];
+  }
+  return SOLANA_RPC_FALLBACKS;
+}
 
 interface RpcParsedTokenAmount {
   amount?: string;
@@ -82,13 +105,13 @@ export function formatSplAmount(rawAmount: string | bigint, decimals: number): s
  */
 export async function queryOnChainSplAccounts(
   ownerAddress: string,
-  customRpcUrl?: string
+  networkOrRpcUrl?: string
 ): Promise<SplTokenBalance[]> {
   if (!ownerAddress || ownerAddress.length < 32) {
     return [];
   }
 
-  const rpcList = customRpcUrl ? [customRpcUrl, ...SOLANA_RPC_FALLBACKS] : SOLANA_RPC_FALLBACKS;
+  const rpcList = resolveClusterRpcEndpoints(networkOrRpcUrl);
 
   for (const rpcUrl of rpcList) {
     try {
@@ -172,55 +195,73 @@ export async function queryOnChainSplAccounts(
 
 /**
  * Fetches all SPL token accounts for an owner address, and optionally merges
- * the known mainnet tokens (USDC, USDT, JUP, RAY, BONK, PYTH) so that
+ * the known tokens (USDC, USDT, JUP, RAY, BONK, PYTH) so that
  * fresh vaults display zero balances for standard tokens.
+ * On Devnet/Testnet, if known SPL tokens don't exist, handles gracefully returning 0 balances without error.
  */
 export async function fetchSplTokenBalances(
   ownerAddress: string,
   includeKnownZeroBalances = true,
-  customRpcUrl?: string
+  activeNetworkOrRpc?: string
 ): Promise<SplTokenBalance[]> {
-  const onChainAccounts = await queryOnChainSplAccounts(ownerAddress, customRpcUrl);
+  try {
+    const onChainAccounts = await queryOnChainSplAccounts(ownerAddress, activeNetworkOrRpc);
 
-  if (!includeKnownZeroBalances) {
-    return onChainAccounts;
-  }
-
-  // Create lookup of found accounts by mint
-  const onChainByMint = new Map<string, SplTokenBalance>();
-  for (const acc of onChainAccounts) {
-    onChainByMint.set(acc.mint, acc);
-  }
-
-  const result: SplTokenBalance[] = [];
-
-  // 1. Ensure all known tokens exist in list
-  for (const known of KNOWN_SPL_TOKENS) {
-    const existing = onChainByMint.get(known.mint);
-    if (existing) {
-      result.push(existing);
-      onChainByMint.delete(known.mint);
-    } else {
-      // Clean zero balance representation
-      result.push({
-        mint: known.mint,
-        symbol: known.symbol,
-        name: known.name,
-        decimals: known.decimals,
-        balance: '0.00',
-        rawAmount: '0',
-        tokenPriceUsd: 0,
-        fiatValueUsd: 0,
-        change24hPercent: 0,
-        icon: known.icon,
-      });
+    if (!includeKnownZeroBalances) {
+      return onChainAccounts;
     }
-  }
 
-  // 2. Append any extra unknown on-chain SPL tokens held by user
-  for (const remaining of onChainByMint.values()) {
-    result.push(remaining);
-  }
+    // Create lookup of found accounts by mint
+    const onChainByMint = new Map<string, SplTokenBalance>();
+    for (const acc of onChainAccounts) {
+      onChainByMint.set(acc.mint, acc);
+    }
 
-  return result;
+    const result: SplTokenBalance[] = [];
+
+    // 1. Ensure all known tokens exist in list
+    for (const known of KNOWN_SPL_TOKENS) {
+      const existing = onChainByMint.get(known.mint);
+      if (existing) {
+        result.push(existing);
+        onChainByMint.delete(known.mint);
+      } else {
+        // Clean zero balance representation
+        result.push({
+          mint: known.mint,
+          symbol: known.symbol,
+          name: known.name,
+          decimals: known.decimals,
+          balance: '0.00',
+          rawAmount: '0',
+          tokenPriceUsd: 0,
+          fiatValueUsd: 0,
+          change24hPercent: 0,
+          icon: known.icon,
+        });
+      }
+    }
+
+    // 2. Append any extra unknown on-chain SPL tokens held by user
+    for (const remaining of onChainByMint.values()) {
+      result.push(remaining);
+    }
+
+    return result;
+  } catch (err) {
+    console.warn(`[DOT SPL Engine] fetchSplTokenBalances error on ${activeNetworkOrRpc}:`, err);
+    // Graceful fallback on Devnet/Testnet
+    return KNOWN_SPL_TOKENS.map((known) => ({
+      mint: known.mint,
+      symbol: known.symbol,
+      name: known.name,
+      decimals: known.decimals,
+      balance: '0.00',
+      rawAmount: '0',
+      tokenPriceUsd: 0,
+      fiatValueUsd: 0,
+      change24hPercent: 0,
+      icon: known.icon,
+    }));
+  }
 }
