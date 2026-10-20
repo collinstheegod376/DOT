@@ -17,24 +17,24 @@ export function MarketWatchlist({ onSelectToken }: MarketWatchlistProps) {
   const watchlistTokens = tokens.slice(0, 6);
 
   return (
-    <div className="rounded-3xl p-5 sm:p-6 transition-colors duration-200 bg-[var(--card-bg)] border border-[var(--card-border)] shadow-[var(--card-shadow)]">
+    <div className="rounded-none p-6 sm:p-7 transition-colors duration-150 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 mb-4 border-b border-[var(--card-border)]">
+      <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-2">
-          <Activity size={18} className="text-[#14F195]" />
-          <h2 className="text-lg font-bold tracking-tight text-[var(--text-primary)]">
-            My Watchlist
+          <Activity size={16} className="text-black dark:text-white" />
+          <h2 className="text-sm font-sans font-black tracking-widest text-black dark:text-white uppercase">
+            WATCHLIST
           </h2>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[11px] font-mono text-[var(--text-muted)]">
-          <span className="w-2 h-2 rounded-full bg-[#14F195] animate-pulse" />
-          <span>Solana Live</span>
+        <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+          <span className="w-1.5 h-1.5 rounded-none bg-emerald-500" />
+          <span>SOLANA LIVE</span>
         </div>
       </div>
 
       {/* Token List */}
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         {watchlistTokens.map((token) => {
           const isPositive = token.change24hPercent >= 0;
           const solscanUrl = token.isNative
@@ -53,25 +53,25 @@ export function MarketWatchlist({ onSelectToken }: MarketWatchlistProps) {
             <div
               key={token.symbol}
               onClick={() => onSelectToken?.(token)}
-              className="group p-3 rounded-2xl bg-[var(--panel-bg)] hover:bg-[var(--panel-hover)] border border-[var(--card-border)] hover:border-emerald-500/30 transition-all duration-150 flex items-center justify-between gap-3 cursor-pointer"
+              className="group p-3.5 rounded-none bg-zinc-50/50 dark:bg-zinc-950/40 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors duration-100 flex items-center justify-between gap-3 cursor-pointer"
             >
-              {/* Left: Token Icon & Names */}
+              {/* Left: Authentic Token Vector Logo & Names */}
               <div className="flex items-center gap-3">
-                <div className="shrink-0 transition-transform duration-200 group-hover:scale-105">
-                  <TokenIcon symbol={token.symbol} size={32} />
+                <div className="shrink-0">
+                  <TokenIcon symbol={token.symbol} size={30} />
                 </div>
                 <div>
-                  <div className="font-bold text-xs sm:text-sm text-[var(--text-primary)] group-hover:text-emerald-400 transition-colors">
+                  <div className="font-sans font-bold text-xs sm:text-sm text-black dark:text-white">
                     {token.name}
                   </div>
-                  <div className="text-[11px] font-mono text-[var(--text-muted)]">
+                  <div className="text-[11px] font-mono text-zinc-400 uppercase">
                     {token.symbol}
                   </div>
                 </div>
               </div>
 
-              {/* Middle: Mini Micro-Sparkline */}
-              <div className="hidden sm:block w-16 h-7">
+              {/* Middle: Mini Micro-Sparkline with clean sharp geometry */}
+              <div className="hidden sm:block w-16 h-6">
                 <svg viewBox="0 0 60 24" className="w-full h-full overflow-visible">
                   <path
                     d={
@@ -80,25 +80,25 @@ export function MarketWatchlist({ onSelectToken }: MarketWatchlistProps) {
                         : 'M 2 6 Q 15 8, 30 16 T 58 20'
                     }
                     fill="none"
-                    stroke={isPositive ? '#14F195' : '#EF4444'}
-                    strokeWidth="2"
-                    strokeLinecap="round"
+                    stroke={isPositive ? '#10B981' : '#EF4444'}
+                    strokeWidth="1.5"
+                    strokeLinecap="square"
                   />
                 </svg>
               </div>
 
-              {/* Right: Live Price & 24h PnL badge */}
+              {/* Right: Live Price & 24h PnL badge in crisp IBM Plex Mono */}
               <div className="text-right">
-                <div className="font-mono font-bold text-xs sm:text-sm text-[var(--text-primary)]">
+                <div className="font-mono font-bold text-xs sm:text-sm text-black dark:text-white">
                   {formattedPrice}
                 </div>
 
                 <div className="flex items-center justify-end gap-1 mt-0.5">
                   <span
-                    className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-full ${
+                    className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded-none border ${
                       isPositive
-                        ? 'bg-emerald-500/15 text-emerald-400'
-                        : 'bg-red-500/15 text-red-400'
+                        ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
+                        : 'border-red-500/30 text-red-600 dark:text-red-400 bg-red-500/10'
                     }`}
                   >
                     {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
@@ -113,7 +113,7 @@ export function MarketWatchlist({ onSelectToken }: MarketWatchlistProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="p-1 rounded-lg text-[var(--text-muted)] hover:text-cyan-400 transition opacity-0 group-hover:opacity-100"
+                    className="p-1 rounded-none text-zinc-400 hover:text-black dark:hover:text-white transition-colors opacity-0 group-hover:opacity-100"
                     title="View on Solscan"
                   >
                     <ExternalLink size={11} />

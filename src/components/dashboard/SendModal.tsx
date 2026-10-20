@@ -234,7 +234,7 @@ export function SendModal({
               </div>
               <input
                 type="text"
-                placeholder="Solana Base58 address (e.g. 83astBR...)"
+                placeholder="Solana recipient address (e.g. 83astBR...)"
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value.trim())}
                 className={`w-full px-4 py-2.5 rounded-xl bg-[#141722] border text-zinc-200 font-mono text-xs focus:outline-none ${
@@ -245,7 +245,7 @@ export function SendModal({
               />
               {!isAddressValid && recipient.length > 0 && (
                 <div className="text-[11px] text-red-400 mt-1">
-                  Invalid Solana address format. Must be a valid 32-44 character Base58 public key.
+                  Invalid Solana address format. Please enter a valid recipient address.
                 </div>
               )}
             </div>

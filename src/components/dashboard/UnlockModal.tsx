@@ -88,7 +88,7 @@ export function UnlockModal() {
           <form onSubmit={handlePasswordUnlock} className="space-y-3">
             <input
               type="password"
-              placeholder="Enter Argon2id fallback password"
+              placeholder="Enter security password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl bg-[#14141C] border border-[#272732] text-zinc-200 text-sm focus:outline-none focus:border-cyan-400 font-mono"
@@ -102,7 +102,7 @@ export function UnlockModal() {
               {isUnlockingPassword ? (
                 <>
                   <RefreshCw size={14} className="animate-spin" />
-                  <span>Decrypting Argon2id...</span>
+                  <span>Unlocking Vault...</span>
                 </>
               ) : (
                 <>

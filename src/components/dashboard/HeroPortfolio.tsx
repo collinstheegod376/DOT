@@ -23,7 +23,7 @@ interface HeroPortfolioProps {
   onViewQr: (address: string) => void;
 }
 
-type Timeframe = '1D' | '1W' | '1M' | '1Y' | 'ALL';
+type Timeframe = 'DAY' | 'WEEK' | 'MONTH' | 'YEAR' | 'ALL';
 
 export function HeroPortfolio({
   onSend,
@@ -41,7 +41,7 @@ export function HeroPortfolio({
   } = useWallet();
 
   const [copied, setCopied] = useState(false);
-  const [timeframe, setTimeframe] = useState<Timeframe>('1M');
+  const [timeframe, setTimeframe] = useState<Timeframe>('MONTH');
 
   // Solana info
   const solBalance = balances.solana?.balance || '0.00';
@@ -65,31 +65,27 @@ export function HeroPortfolio({
   const isPositive = solChange >= 0;
 
   return (
-    <div className="relative rounded-3xl p-6 sm:p-8 transition-colors duration-200 bg-[var(--card-bg)] border border-[var(--card-border)] shadow-[var(--card-shadow)] overflow-hidden">
-      {/* Background ambient lighting */}
-      <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-
-      {/* Top Bar: Vault Status & Solana Address Pill */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-5 border-b border-[var(--card-border)]">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#14F195] shadow-[0_0_8px_#14F195]" />
-          <span className="text-xs font-mono uppercase tracking-wider text-[var(--text-secondary)] font-semibold">
-            Sovereign Solana Portfolio
+    <div className="relative rounded-none p-6 sm:p-8 transition-colors duration-150 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800">
+      {/* Top Bar: Vault Status & Solana Address */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-5 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center gap-2.5">
+          <div className="w-2 h-2 rounded-none bg-emerald-500" />
+          <span className="text-xs font-sans uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-bold">
+            SOLANA PORTFOLIO
           </span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
-            SVM
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-none border border-zinc-300 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">
+            MAINNET
           </span>
         </div>
 
         {/* Truncated Address with Copy, QR, Solscan */}
         {solAddress && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[var(--panel-bg)] border border-[var(--card-border)] text-xs font-mono text-[var(--text-secondary)] self-start sm:self-auto">
-            <span className="text-[var(--text-muted)] mr-1">{truncatedAddress}</span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-none border border-zinc-200 dark:border-zinc-800 text-xs font-mono text-zinc-600 dark:text-zinc-400 self-start sm:self-auto bg-zinc-50 dark:bg-zinc-900/50">
+            <span className="text-zinc-500 mr-1">{truncatedAddress}</span>
 
             <button
               onClick={() => onViewQr(solAddress)}
-              className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[#14F195] transition cursor-pointer"
+              className="p-1 rounded-none text-zinc-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
               title="Show Address QR Code"
             >
               <QrCode size={13} />
@@ -97,11 +93,11 @@ export function HeroPortfolio({
 
             <button
               onClick={handleCopy}
-              className="p-1 rounded-lg text-[var(--text-muted)] hover:text-emerald-400 transition cursor-pointer"
+              className="p-1 rounded-none text-zinc-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
               title="Copy Solana Address"
             >
               {copied ? (
-                <Check size={13} className="text-emerald-400" />
+                <Check size={13} className="text-emerald-500" />
               ) : (
                 <Copy size={13} />
               )}
@@ -111,7 +107,7 @@ export function HeroPortfolio({
               href={`https://solscan.io/account/${solAddress}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1 rounded-lg text-[var(--text-muted)] hover:text-cyan-400 transition cursor-pointer"
+              className="p-1 rounded-none text-zinc-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
               title="View on Solscan Explorer"
             >
               <ExternalLink size={13} />
@@ -123,36 +119,40 @@ export function HeroPortfolio({
       {/* Main Net Worth Display + Timeframe Selector */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
-          <div className="text-xs font-mono uppercase tracking-widest text-[var(--text-muted)] mb-1">
-            Total Net Worth
+          <div className="text-[11px] font-sans font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-1">
+            TOTAL NET WORTH
           </div>
-          <div className="text-4xl sm:text-5xl font-extrabold tracking-tight font-mono text-[var(--text-primary)]">
+          {/* DM Sans 900 display net worth font with tight tracking (-0.03em) */}
+          <div
+            className="text-4xl sm:text-5xl lg:text-6xl font-sans font-[900] text-black dark:text-white tracking-[-0.03em]"
+            style={{ letterSpacing: '-0.03em' }}
+          >
             ${totalFiatBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
 
-          {/* Live SOL Balance Sub-line */}
+          {/* Live SOL Balance Sub-line in IBM Plex Mono */}
           <div className="flex flex-wrap items-center gap-2.5 mt-2.5 text-xs sm:text-sm">
-            <div className="flex items-center gap-1 font-mono text-[var(--text-secondary)]">
-              <span className="font-bold text-[var(--text-primary)]">{solBalance}</span>
+            <div className="flex items-center gap-1 font-mono text-zinc-600 dark:text-zinc-400">
+              <span className="font-bold text-black dark:text-white">{solBalance}</span>
               <span>SOL</span>
-              <span className="text-[var(--text-muted)]">•</span>
+              <span className="text-zinc-300 dark:text-zinc-700">•</span>
               <span>≈ ${solFiat.toFixed(2)} USD</span>
             </div>
 
             {/* Price & 24h PnL badge */}
             <div className="flex items-center gap-1.5 font-mono text-xs">
-              <span className="text-[var(--text-muted)]">
+              <span className="text-zinc-400">
                 ${solPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </span>
 
               <span
-                className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full font-semibold text-[11px] ${
+                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-none font-semibold text-[10px] border ${
                   isPositive
-                    ? 'bg-emerald-500/15 text-emerald-400'
-                    : 'bg-red-500/15 text-red-400'
+                    ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
+                    : 'border-red-500/30 text-red-600 dark:text-red-400 bg-red-500/10'
                 }`}
               >
-                {isPositive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                 <span>
                   {isPositive ? '+' : ''}
                   {solChange}%
@@ -162,108 +162,113 @@ export function HeroPortfolio({
           </div>
         </div>
 
-        {/* Timeframe Selector Pills */}
-        <div className="flex rounded-xl bg-[var(--panel-hover)] p-1 border border-[var(--card-border)] self-start sm:self-auto text-xs font-mono font-semibold">
-          {(['1D', '1W', '1M', '1Y', 'ALL'] as Timeframe[]).map((tf) => (
-            <button
-              key={tf}
-              onClick={() => setTimeframe(tf)}
-              className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                timeframe === tf
-                  ? 'bg-emerald-500 text-black shadow-sm font-bold'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-              }`}
-            >
-              {tf}
-            </button>
-          ))}
+        {/* Timeframe Filter Buttons: DAY, WEEK, MONTH, YEAR, ALL with sharp 1px borders and black/white inversion */}
+        <div className="flex rounded-none border border-zinc-200 dark:border-zinc-800 p-0.5 self-start sm:self-auto text-xs font-mono">
+          {(['DAY', 'WEEK', 'MONTH', 'YEAR', 'ALL'] as Timeframe[]).map((tf) => {
+            const isActive = timeframe === tf;
+            return (
+              <button
+                key={tf}
+                onClick={() => setTimeframe(tf)}
+                className={`px-3 py-1.5 rounded-none text-xs font-mono font-bold tracking-wider transition-colors cursor-pointer border ${
+                  isActive
+                    ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
+                    : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
+                }`}
+              >
+                {tf}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Interactive Portfolio Chart Curve */}
-      <div className="relative w-full h-32 sm:h-40 my-4">
+      {/* SVG Area Chart with clean lines and flat background */}
+      <div className="relative w-full h-32 sm:h-44 my-6 rounded-none border border-zinc-100 dark:border-zinc-900 bg-zinc-50/50 dark:bg-zinc-950/50 p-2">
         <svg
           viewBox="0 0 500 120"
           preserveAspectRatio="none"
           className="w-full h-full overflow-visible"
         >
           <defs>
-            <linearGradient id="hero-chart-glow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#14F195" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#14F195" stopOpacity="0.00" />
+            <linearGradient id="rednit-hero-chart-glow" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.10" />
+              <stop offset="100%" stopColor="currentColor" stopOpacity="0.00" />
             </linearGradient>
           </defs>
 
-          {/* Grid lines */}
-          <line x1="0" y1="30" x2="500" y2="30" stroke="currentColor" strokeOpacity="0.06" strokeDasharray="3 3" />
-          <line x1="0" y1="70" x2="500" y2="70" stroke="currentColor" strokeOpacity="0.06" strokeDasharray="3 3" />
-          <line x1="0" y1="110" x2="500" y2="110" stroke="currentColor" strokeOpacity="0.06" strokeDasharray="3 3" />
+          {/* Hairline Grid lines */}
+          <line x1="0" y1="30" x2="500" y2="30" stroke="currentColor" strokeOpacity="0.08" strokeDasharray="2 2" />
+          <line x1="0" y1="65" x2="500" y2="65" stroke="currentColor" strokeOpacity="0.08" strokeDasharray="2 2" />
+          <line x1="0" y1="100" x2="500" y2="100" stroke="currentColor" strokeOpacity="0.08" strokeDasharray="2 2" />
 
           {/* Area fill */}
           <path
             d="M 0 100 Q 80 85, 140 60 T 260 55 T 380 35 T 500 20 L 500 120 L 0 120 Z"
-            fill="url(#hero-chart-glow)"
+            fill="url(#rednit-hero-chart-glow)"
+            className="text-black dark:text-white"
           />
 
-          {/* Glowing Stroke Curve */}
+          {/* Crisp Clean Stroke Curve */}
           <path
             d="M 0 100 Q 80 85, 140 60 T 260 55 T 380 35 T 500 20"
             fill="none"
-            stroke="#14F195"
-            strokeWidth="3"
-            strokeLinecap="round"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="square"
+            className="text-black dark:text-white"
           />
 
-          {/* Pulse Endpoint */}
-          <circle cx="500" cy="20" r="4.5" fill="#14F195" className="animate-pulse" />
+          {/* Endpoint marker */}
+          <rect x="497" y="17" width="6" height="6" fill="currentColor" className="text-black dark:text-white" />
         </svg>
       </div>
 
       {/* Zero balance indicator */}
       {parseFloat(solBalance) === 0 && totalFiatBalance === 0 && (
-        <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mb-6 flex items-start gap-3">
-          <ShieldCheck size={18} className="text-[#14F195] shrink-0 mt-0.5" />
-          <div className="text-xs leading-relaxed text-[var(--text-secondary)]">
-            <span className="font-semibold text-emerald-400">Vault Ready:</span> Real on-chain balance is $0.00.
-            Deposit SOL or SPL tokens to your Base58 address to activate real-time tracking.
+        <div className="p-3.5 rounded-none border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 mb-6 flex items-start gap-3">
+          <ShieldCheck size={16} className="text-black dark:text-white shrink-0 mt-0.5" />
+          <div className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 font-sans">
+            <span className="font-bold text-black dark:text-white uppercase tracking-wider">Vault Ready:</span> Real on-chain balance is $0.00.
+            Deposit SOL or tokens to your Solana address to activate real-time tracking.
           </div>
         </div>
       )}
 
-      {/* Action Buttons Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-        <button
-          onClick={() => onReceive('SOL')}
-          className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-xs bg-[var(--panel-bg)] hover:bg-[var(--panel-hover)] text-[var(--text-primary)] border border-[var(--card-border)] shadow-sm transition cursor-pointer"
-        >
-          <ArrowDownLeft size={16} className="text-[#14F195]" strokeWidth={2.5} />
-          <span>Receive</span>
-        </button>
-
+      {/* Action Buttons Grid with sharp 0px borders and 48px touch targets */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
         <button
           onClick={() => onSend('SOL')}
-          className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-black shadow-md shadow-emerald-500/20 transition cursor-pointer"
+          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-bold text-xs uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition-opacity cursor-pointer border border-black dark:border-white"
         >
           <ArrowUpRight size={16} strokeWidth={2.5} />
           <span>Send</span>
         </button>
 
         <button
+          onClick={() => onReceive('SOL')}
+          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-bold text-xs uppercase tracking-wider bg-white dark:bg-black text-black dark:text-white border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-colors cursor-pointer"
+        >
+          <ArrowDownLeft size={16} strokeWidth={2.5} />
+          <span>Receive</span>
+        </button>
+
+        <button
           onClick={onOpenAirGap}
-          className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold text-xs bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-400 border border-cyan-500/30 transition cursor-pointer"
+          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-bold text-xs uppercase tracking-wider bg-white dark:bg-black text-black dark:text-white border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-colors cursor-pointer"
         >
           <Radio size={15} />
-          <span>Air-Gap Sign</span>
+          <span>Offline Vault</span>
         </button>
 
         <button
           onClick={refreshBalances}
           disabled={isRefreshingBalances || !isOnline}
-          className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-semibold text-xs bg-[var(--panel-bg)] hover:bg-[var(--panel-hover)] text-[var(--text-secondary)] border border-[var(--card-border)] transition cursor-pointer disabled:opacity-50"
+          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-bold text-xs uppercase tracking-wider bg-white dark:bg-black text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white transition-colors cursor-pointer disabled:opacity-50"
         >
           <RefreshCw
-            size={15}
-            className={isRefreshingBalances ? 'animate-spin text-[#14F195]' : ''}
+            size={14}
+            className={isRefreshingBalances ? 'animate-spin' : ''}
           />
           <span>{isRefreshingBalances ? 'Syncing...' : 'Sync'}</span>
         </button>

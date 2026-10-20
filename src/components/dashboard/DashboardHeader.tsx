@@ -77,7 +77,7 @@ export function DashboardHeader({ onOpenSettings }: DashboardHeaderProps) {
               </span>
             </div>
             <div className="text-[10px] font-mono text-zinc-500 hidden sm:block">
-              Zero-Server • Ed25519 Silicon Cryptography
+              Self-Custodial • Device Protected
             </div>
           </div>
         </div>

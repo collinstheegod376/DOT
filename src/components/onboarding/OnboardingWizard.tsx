@@ -274,15 +274,15 @@ export function OnboardingWizard() {
               <div className="text-[#14F195] mb-1.5 flex justify-center">
                 <CheckCircle2 size={20} />
               </div>
-              <div className="text-xs font-semibold text-zinc-200">Pure Ed25519</div>
-              <div className="text-[11px] text-zinc-400 mt-1">SLIP-0010 hardened keys derived locally on device</div>
+              <div className="text-xs font-semibold text-zinc-200">Self-Custodial</div>
+              <div className="text-[11px] text-zinc-400 mt-1">Security keys generated and stored locally on your device</div>
             </div>
             <div className="p-4 rounded-2xl bg-[#121218] border border-[#1F1F24] text-center">
               <div className="text-cyan-400 mb-1.5 flex justify-center">
                 <Fingerprint size={20} />
               </div>
-              <div className="text-xs font-semibold text-zinc-200">WebAuthn PRF</div>
-              <div className="text-[11px] text-zinc-400 mt-1">Hardware biometric authentication via Secure Enclave</div>
+              <div className="text-xs font-semibold text-zinc-200">Passkey Protection</div>
+              <div className="text-[11px] text-zinc-400 mt-1">Biometric authentication via device Secure Enclave</div>
             </div>
             <div className="p-4 rounded-2xl bg-[#121218] border border-[#1F1F24] text-center">
               <div className="text-amber-400 mb-1.5 flex justify-center">
@@ -351,7 +351,7 @@ export function OnboardingWizard() {
                       />
                     </label>
                     <div className="text-[11px] text-zinc-500 mt-1">
-                      {importDot1FileContent ? 'File loaded successfully' : 'Encrypted Argon2id envelope format'}
+                      {importDot1FileContent ? 'File loaded successfully' : 'Encrypted vault backup file'}
                     </div>
                   </div>
 
@@ -385,7 +385,7 @@ export function OnboardingWizard() {
 
                   <div>
                     <label className="block text-xs font-medium text-zinc-400 mb-1">
-                      Set New Fallback Password (Argon2id)
+                      Set New Security Password
                     </label>
                     <input
                       type="password"
@@ -430,10 +430,10 @@ export function OnboardingWizard() {
           <div className="mb-6">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Fingerprint size={22} className="text-[#14F195]" />
-              <span>Security & Passkey Ceremony</span>
+              <span>Security & Passkey Setup</span>
             </h2>
             <p className="text-xs text-zinc-400 mt-1">
-              Establish hardware biometric signing and memory-hard Argon2id backup protection.
+              Establish biometric signing and secure password backup protection.
             </p>
           </div>
 
@@ -446,10 +446,10 @@ export function OnboardingWizard() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-zinc-100">
-                    Primary: WebAuthn PRF Passkey
+                    Primary: Biometric Passkey
                   </h3>
                   <div className="text-xs text-zinc-400">
-                    Touch ID / Face ID / Windows Hello hardware key
+                    Touch ID / Face ID / Windows Hello security key
                   </div>
                 </div>
               </div>
@@ -478,12 +478,12 @@ export function OnboardingWizard() {
               ) : passkeyRegistered ? (
                 <>
                   <Check size={16} />
-                  <span>Hardware Passkey Bound to Silicon</span>
+                  <span>Hardware Passkey Activated</span>
                 </>
               ) : (
                 <>
                   <Fingerprint size={16} />
-                  <span>Register Biometric Passkey (WebAuthn PRF)</span>
+                  <span>Register Biometric Passkey</span>
                 </>
               )}
             </button>
@@ -494,11 +494,11 @@ export function OnboardingWizard() {
             <div className="flex items-center gap-2 mb-3">
               <Lock size={16} className="text-amber-400" />
               <h3 className="text-sm font-semibold text-zinc-200">
-                Mandatory Password Fallback (Argon2id)
+                Security Password Backup
               </h3>
             </div>
             <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
-              Protects against hardware loss. Derived using memory-hard Argon2id to prevent GPU brute-force.
+              Protects against hardware loss. High-grade device encryption safeguards your wallet.
             </p>
 
             <div className="space-y-3">
@@ -523,7 +523,7 @@ export function OnboardingWizard() {
               {password.length > 0 && (
                 <div className="space-y-2 pt-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-500">Argon2id Strength:</span>
+                    <span className="text-zinc-500">Password Strength:</span>
                     <span className="font-semibold font-mono" style={{ color: strength.color }}>
                       {strength.label}
                     </span>
@@ -577,9 +577,9 @@ export function OnboardingWizard() {
           <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/30 flex items-start gap-3 mb-6">
             <Sparkles size={18} className="text-[#14F195] shrink-0 mt-0.5" />
             <div className="text-xs text-zinc-300 leading-relaxed">
-              <span className="font-semibold text-emerald-300">Why Dual-Factor Silicon Defense?</span> Passkeys
+              <span className="font-semibold text-emerald-300">Why Dual-Factor Device Defense?</span> Passkeys
               bind to your device&apos;s Secure Enclave for instantaneous, phish-proof daily signing. The
-              Argon2id password provides an emergency bridge to restore your encrypted `.dot1` envelope if
+              security password provides an emergency bridge to restore your encrypted wallet backup if
               your physical hardware is lost or upgraded.
             </div>
           </div>
@@ -617,12 +617,12 @@ export function OnboardingWizard() {
                   <span>Sovereign Solana Address</span>
                 </h2>
                 <p className="text-xs text-zinc-400 mt-1">
-                  Cryptographically derived using SLIP-0010 Ed25519 standard derivation.
+                  Cryptographically verified and protected directly on your hardware.
                 </p>
               </div>
-              <div className="px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-[11px] font-mono text-emerald-400 flex items-center gap-1.5">
+              <div className="px-2.5 py-1 rounded-none bg-emerald-500/10 border border-emerald-500/30 text-[11px] font-mono text-emerald-400 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#14F195]" />
-                <span>Base58 Ed25519</span>
+                <span>Solana Mainnet</span>
               </div>
             </div>
           </div>
@@ -641,13 +641,13 @@ export function OnboardingWizard() {
                 </div>
                 <div>
                   <div className="text-sm font-bold text-white flex items-center gap-2">
-                    <span>Solana Base58 Address</span>
+                    <span>Solana Account Address</span>
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400">
-                      SVM
+                      SOLANA
                     </span>
                   </div>
                   <div className="text-xs font-mono text-zinc-500">
-                    Derivation Path: <span className="text-emerald-400/90">{solanaDerivationPath}</span>
+                    Account: <span className="text-emerald-400/90">{solanaDerivationPath}</span>
                   </div>
                 </div>
               </div>
@@ -757,7 +757,7 @@ export function OnboardingWizard() {
                   Option A: Encrypted `.dot1` Envelope
                 </h3>
                 <div className="text-xs text-zinc-400">
-                  Safe for Cloud Drive, USB, or Email (Argon2id + AES-256-GCM)
+                  Safe for Cloud Drive, USB, or Email (Encrypted Vault)
                 </div>
               </div>
             </div>
@@ -834,7 +834,7 @@ export function OnboardingWizard() {
                         : 'text-zinc-400 hover:text-zinc-200'
                     }`}
                   >
-                    Solana Ed25519 Secret Key
+                    Solana Secret Recovery Key
                   </button>
                 </div>
 
@@ -878,7 +878,7 @@ export function OnboardingWizard() {
                   <div className="space-y-2">
                     <div className="p-3 rounded-xl bg-[#0A0A0C] border border-[#272732]">
                       <div className="text-[11px] font-semibold text-zinc-300 mb-1 flex items-center justify-between">
-                        <span>Solana Private Key Seed (Ed25519 32-byte Hex)</span>
+                        <span>Solana Private Key Seed</span>
                         <button
                           onClick={() => {
                             if (generatedKeys?.solana) {

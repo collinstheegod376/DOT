@@ -126,43 +126,43 @@ function WalletAppContent() {
       {/* 3. Mobile Floating Bottom Action Bar */}
       <nav
         aria-label="Mobile Navigation Bar"
-        className="fixed bottom-0 left-0 right-0 z-30 lg:hidden p-3 bg-[var(--header-bg)]/95 backdrop-blur-xl border-t border-[var(--header-border)] shadow-2xl"
+        className="fixed bottom-0 left-0 right-0 z-30 lg:hidden p-2 bg-[var(--header-bg)]/95 backdrop-blur-xl border-t border-[var(--header-border)]"
       >
-        <div className="max-w-md mx-auto grid grid-cols-4 gap-2">
+        <div className="max-w-md mx-auto grid grid-cols-4 gap-1.5">
           {/* Send */}
           <button
             onClick={() => handleOpenSend('SOL')}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-emerald-500 text-black font-bold text-[11px] shadow-md transition active:scale-95 cursor-pointer"
+            className="h-12 flex flex-col items-center justify-center rounded-none bg-black text-white dark:bg-white dark:text-black font-bold text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer"
           >
-            <ArrowUpRight size={18} strokeWidth={2.5} />
+            <ArrowUpRight size={16} strokeWidth={2.5} />
             <span className="mt-0.5">Send</span>
           </button>
 
           {/* Receive */}
           <button
             onClick={() => handleOpenReceive('SOL')}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-[var(--panel-bg)] hover:bg-[var(--panel-hover)] text-[var(--text-primary)] border border-[var(--card-border)] font-semibold text-[11px] transition active:scale-95 cursor-pointer"
+            className="h-12 flex flex-col items-center justify-center rounded-none bg-[var(--panel-bg)] hover:bg-[var(--panel-hover)] text-[var(--text-primary)] border border-[var(--card-border)] font-semibold text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer"
           >
-            <ArrowDownLeft size={18} className="text-[#14F195]" strokeWidth={2.5} />
+            <ArrowDownLeft size={16} strokeWidth={2.5} />
             <span className="mt-0.5">Receive</span>
           </button>
 
           {/* QR */}
           <button
             onClick={() => solAddress && handleViewQr(solAddress)}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-[var(--panel-bg)] hover:bg-[var(--panel-hover)] text-[var(--text-primary)] border border-[var(--card-border)] font-semibold text-[11px] transition active:scale-95 cursor-pointer"
+            className="h-12 flex flex-col items-center justify-center rounded-none bg-[var(--panel-bg)] hover:bg-[var(--panel-hover)] text-[var(--text-primary)] border border-[var(--card-border)] font-semibold text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer"
           >
-            <QrCode size={18} className="text-cyan-400" />
+            <QrCode size={16} />
             <span className="mt-0.5">QR</span>
           </button>
 
-          {/* Air-Gap */}
+          {/* Air-Gap / Offline */}
           <button
             onClick={() => setAirGapModalOpen(true)}
-            className="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-semibold text-[11px] transition active:scale-95 cursor-pointer"
+            className="h-12 flex flex-col items-center justify-center rounded-none bg-[var(--panel-bg)] hover:bg-[var(--panel-hover)] text-[var(--text-primary)] border border-[var(--card-border)] font-semibold text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer"
           >
-            <Radio size={18} />
-            <span className="mt-0.5">Air-Gap</span>
+            <Radio size={16} />
+            <span className="mt-0.5">Offline</span>
           </button>
         </div>
       </nav>
@@ -208,11 +208,11 @@ function WalletAppContent() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[var(--text-muted)] font-mono">
           <div className="flex items-center gap-2">
             <ShieldCheck size={14} className="text-[#14F195]" />
-            <span>DOT Sovereign Solana Vault • Client-Side Silicon Cryptography</span>
+            <span>DOT Sovereign Vault • Client-Side Security</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#14F195]" />
-            <span>Zero Server Footprint • SLIP-0010 Ed25519</span>
+            <span>Self-Custodial • Solana Network</span>
           </div>
         </div>
       </footer>

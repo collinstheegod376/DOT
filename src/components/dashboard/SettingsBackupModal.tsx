@@ -94,7 +94,7 @@ export function SettingsBackupModal({ isOpen, onClose }: SettingsBackupModalProp
           <div className="p-3.5 rounded-2xl bg-[#14141E] border border-[#1F1F24]">
             <div className="flex items-center gap-2 text-xs font-semibold text-zinc-200 mb-1">
               <Lock size={16} className="text-amber-400" />
-              <span>Argon2id Fallback</span>
+              <span>Security Password</span>
             </div>
             <div className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
               <CheckCircle2 size={12} />
@@ -115,7 +115,7 @@ export function SettingsBackupModal({ isOpen, onClose }: SettingsBackupModalProp
             </div>
           </div>
           <p className="text-xs text-zinc-300 my-3 leading-relaxed">
-            Download your latest vault backup. Protected with AES-256-GCM and memory-hard Argon2id KDF. Safe to store in Google Drive, iCloud, or a flash drive.
+            Download your latest vault backup. Protected with high-grade device encryption. Safe to store in Google Drive, iCloud, or a flash drive.
           </p>
 
           <button
@@ -137,10 +137,10 @@ export function SettingsBackupModal({ isOpen, onClose }: SettingsBackupModalProp
           </button>
         </div>
 
-        {/* Derivation Paths Reference */}
+        {/* Network Account Reference */}
         <div className="p-4 rounded-2xl bg-[#121218] border border-[#1F1F24] mb-6">
           <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2 font-mono">
-            Active Derivation Paths
+            Network Account Standards
           </h4>
           <div className="space-y-1.5 text-xs font-mono">
             {selectedChains.map((id) => (

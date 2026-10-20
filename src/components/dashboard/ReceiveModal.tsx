@@ -130,7 +130,7 @@ export function ReceiveModal({
 
           <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-emerald-400 font-mono">
             <ShieldCheck size={13} />
-            <span>Solana Base58 Ed25519 Verified</span>
+            <span>Solana Network Verified</span>
           </div>
         </div>
 
@@ -138,19 +138,19 @@ export function ReceiveModal({
         <div className="p-3 rounded-2xl bg-[#090A0E] border border-[#1E2230] mb-3">
           <div className="flex items-center justify-between text-[10px] text-zinc-500 uppercase tracking-wider mb-1">
             <span>Solana Receiving Address</span>
-            <span className="font-mono text-emerald-400">m/44&apos;/501&apos;/0&apos;/0&apos;</span>
+            <span className="font-mono text-emerald-400">Solana Mainnet</span>
           </div>
           <div className="font-mono text-xs text-zinc-200 break-all select-all leading-relaxed">
             {solAddress}
           </div>
         </div>
 
-        {/* ATA notice for SPL tokens */}
+        {/* Notice for SPL tokens */}
         {!activeToken?.isNative && (
           <div className="mb-3.5 px-3 py-2 rounded-xl bg-emerald-950/20 border border-emerald-800/30 flex items-center justify-between text-[11px] text-zinc-300">
             <span className="flex items-center gap-1.5">
               <Coins size={13} className="text-[#14F195]" />
-              <span>Sends directly to your {activeToken?.symbol} ATA</span>
+              <span>Sends directly to your {activeToken?.symbol} token account</span>
             </span>
             <span className="font-mono text-zinc-500">Same Address</span>
           </div>

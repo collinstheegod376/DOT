@@ -12,9 +12,7 @@ import {
   CheckCircle2,
   ChevronDown,
   QrCode,
-  ExternalLink,
-  ShieldAlert,
-  Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
 import { TokenAsset } from '@/types/wallet';
@@ -167,69 +165,69 @@ export function QuickActionCard({
   }, [solAddress]);
 
   return (
-    <div className="rounded-3xl p-5 sm:p-6 transition-colors duration-200 bg-[var(--card-bg)] border border-[var(--card-border)] shadow-[var(--card-shadow)] flex flex-col justify-between">
+    <div className="rounded-none p-6 sm:p-7 transition-colors duration-150 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between">
       <div>
-        {/* Navigation Tabs: Send, Receive, Air-Gap */}
-        <div className="grid grid-cols-3 p-1 rounded-2xl bg-[var(--panel-hover)] border border-[var(--card-border)] mb-5">
+        {/* Sharp Rectangular Action Tabs: "SEND", "RECEIVE", "OFFLINE VAULT" */}
+        <div className="grid grid-cols-3 p-0.5 rounded-none border border-zinc-200 dark:border-zinc-800 mb-6 bg-zinc-50 dark:bg-zinc-950">
           <button
             onClick={() => setActiveTab('send')}
-            className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold tracking-wide transition-all duration-150 cursor-pointer ${
+            className={`h-11 flex items-center justify-center gap-1.5 px-2 rounded-none text-xs font-sans font-bold tracking-wider uppercase transition-colors cursor-pointer border ${
               activeTab === 'send'
-                ? 'bg-emerald-500 text-black shadow-md font-bold'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
+                : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <ArrowUpRight size={14} />
-            <span>Send</span>
+            <span>SEND</span>
           </button>
 
           <button
             onClick={() => setActiveTab('receive')}
-            className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold tracking-wide transition-all duration-150 cursor-pointer ${
+            className={`h-11 flex items-center justify-center gap-1.5 px-2 rounded-none text-xs font-sans font-bold tracking-wider uppercase transition-colors cursor-pointer border ${
               activeTab === 'receive'
-                ? 'bg-emerald-500 text-black shadow-md font-bold'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
+                : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <ArrowDownLeft size={14} />
-            <span>Receive</span>
+            <span>RECEIVE</span>
           </button>
 
           <button
             onClick={() => setActiveTab('airgap')}
-            className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold tracking-wide transition-all duration-150 cursor-pointer ${
+            className={`h-11 flex items-center justify-center gap-1.5 px-2 rounded-none text-xs font-sans font-bold tracking-wider uppercase transition-colors cursor-pointer border ${
               activeTab === 'airgap'
-                ? 'bg-cyan-500 text-black shadow-md font-bold'
-                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
+                : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <Radio size={14} />
-            <span>Air-Gap</span>
+            <span className="truncate">OFFLINE VAULT</span>
           </button>
         </div>
 
         {/* ===================== TAB 1: SEND ===================== */}
         {activeTab === 'send' && (
           <div className="space-y-4">
-            {/* Token Selector */}
+            {/* Clean Token Selector with Authentic Coin SVGs */}
             <div>
-              <label className="block text-[11px] font-mono text-[var(--text-muted)] uppercase tracking-wider mb-1.5">
-                Select Asset
+              <label className="block text-[10px] font-mono font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-1.5">
+                SELECT ASSET
               </label>
 
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setTokenDropdownOpen(!tokenDropdownOpen)}
-                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-[var(--panel-bg)] hover:bg-[var(--panel-hover)] border border-[var(--card-border)] hover:border-emerald-500/40 transition cursor-pointer"
+                  className="w-full flex items-center justify-between p-3 rounded-none bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5">
                     <TokenIcon symbol={activeToken.symbol} size={28} />
                     <div className="text-left">
-                      <div className="font-bold text-sm text-[var(--text-primary)] leading-tight">
+                      <div className="font-sans font-bold text-sm text-black dark:text-white leading-tight">
                         {activeToken.symbol}
                       </div>
-                      <div className="text-[11px] text-[var(--text-muted)]">
+                      <div className="text-[11px] font-mono text-zinc-400">
                         {activeToken.name}
                       </div>
                     </div>
@@ -237,20 +235,20 @@ export function QuickActionCard({
 
                   <div className="flex items-center gap-2">
                     <div className="text-right font-mono">
-                      <div className="text-xs font-semibold text-[var(--text-primary)]">
+                      <div className="text-xs font-semibold text-black dark:text-white">
                         {activeToken.balance}
                       </div>
-                      <div className="text-[10px] text-[var(--text-muted)]">Available</div>
+                      <div className="text-[10px] text-zinc-400 uppercase">Available</div>
                     </div>
-                    <ChevronDown size={14} className="text-[var(--text-muted)]" />
+                    <ChevronDown size={14} className="text-zinc-400" />
                   </div>
                 </button>
 
                 {/* Token Selector Dropdown */}
                 {tokenDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)] shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                    <div className="text-[10px] font-mono text-[var(--text-muted)] px-3 py-1 uppercase">
-                      Supported Solana Tokens
+                  <div className="absolute top-full left-0 right-0 mt-1 rounded-none bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-1 z-50 animate-in fade-in duration-100">
+                    <div className="text-[10px] font-mono text-zinc-400 px-3 py-1 uppercase tracking-wider">
+                      Solana Assets
                     </div>
                     {tokens.map((token) => (
                       <button
@@ -260,17 +258,17 @@ export function QuickActionCard({
                           setSelectedSymbol(token.symbol);
                           setTokenDropdownOpen(false);
                         }}
-                        className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs transition cursor-pointer ${
+                        className={`w-full flex items-center justify-between p-2.5 rounded-none text-xs transition-colors cursor-pointer border ${
                           selectedSymbol === token.symbol
-                            ? 'bg-emerald-500/15 text-emerald-400 font-bold'
-                            : 'text-[var(--text-secondary)] hover:bg-[var(--panel-hover)] hover:text-[var(--text-primary)]'
+                            ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-bold'
+                            : 'border-transparent text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900'
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
                           <TokenIcon symbol={token.symbol} size={24} />
                           <div className="text-left">
-                            <span className="font-semibold">{token.symbol}</span>
-                            <span className="text-[11px] text-[var(--text-muted)] ml-1.5">
+                            <span className="font-bold">{token.symbol}</span>
+                            <span className="text-[11px] text-zinc-400 ml-1.5">
                               {token.name}
                             </span>
                           </div>
@@ -278,7 +276,7 @@ export function QuickActionCard({
 
                         <div className="font-mono text-right text-[11px]">
                           <div>{token.balance}</div>
-                          <div className="text-[10px] text-[var(--text-muted)]">
+                          <div className="text-[10px] text-zinc-400">
                             ≈ ${token.fiatValueUsd.toFixed(2)}
                           </div>
                         </div>
@@ -292,13 +290,13 @@ export function QuickActionCard({
             {/* Amount Input with MAX and Live USD */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[11px] font-mono text-[var(--text-muted)] uppercase tracking-wider">
-                  Amount
+                <label className="text-[10px] font-mono font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+                  AMOUNT
                 </label>
                 <button
                   type="button"
                   onClick={handleSetMax}
-                  className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 font-semibold cursor-pointer"
+                  className="text-[11px] font-mono font-bold text-black dark:text-white uppercase tracking-wider cursor-pointer hover:underline"
                 >
                   MAX: {activeToken.balance}
                 </button>
@@ -311,21 +309,21 @@ export function QuickActionCard({
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full pl-4 pr-16 py-3 rounded-2xl bg-[var(--input-bg)] border border-[var(--input-border)] text-sm font-mono font-bold text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-emerald-500 transition"
+                  className="w-full pl-4 pr-16 py-3 rounded-none bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-sm font-mono font-bold text-black dark:text-white placeholder-zinc-400 focus:outline-none focus:border-black dark:focus:border-white transition-colors"
                 />
                 <button
                   type="button"
                   onClick={handleSetMax}
-                  className="absolute right-2.5 top-2.5 px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black transition cursor-pointer"
+                  className="absolute right-2 top-2 px-2.5 py-1 rounded-none text-[10px] font-mono font-bold bg-black text-white dark:bg-white dark:text-black border border-black dark:border-white transition-opacity cursor-pointer uppercase"
                 >
                   MAX
                 </button>
               </div>
 
               {/* USD Equivalent Counter */}
-              <div className="flex items-center justify-between mt-1.5 text-[11px] font-mono text-[var(--text-muted)]">
-                <span>Value in USD</span>
-                <span className="font-semibold text-[var(--text-secondary)]">
+              <div className="flex items-center justify-between mt-1.5 text-[11px] font-mono text-zinc-500">
+                <span className="uppercase text-[10px]">Value in USD</span>
+                <span className="font-bold text-black dark:text-white">
                   ≈ ${fiatEquivalent.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                 </span>
               </div>
@@ -334,55 +332,55 @@ export function QuickActionCard({
             {/* Destination Address */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[11px] font-mono text-[var(--text-muted)] uppercase tracking-wider">
-                  Destination Address
+                <label className="text-[10px] font-mono font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+                  DESTINATION ADDRESS
                 </label>
                 <button
                   type="button"
                   onClick={handlePaste}
-                  className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 cursor-pointer"
+                  className="text-[11px] font-mono text-zinc-500 hover:text-black dark:hover:text-white font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer"
                 >
                   <Clipboard size={11} />
-                  <span>Paste</span>
+                  <span>PASTE</span>
                 </button>
               </div>
 
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Base58 Solana recipient address..."
+                  placeholder="Solana recipient address..."
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
-                  className={`w-full pl-4 pr-10 py-3 rounded-2xl bg-[var(--input-bg)] border text-xs font-mono text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none transition ${
+                  className={`w-full pl-4 pr-10 py-3 rounded-none bg-zinc-50 dark:bg-zinc-950 border text-xs font-mono text-black dark:text-white placeholder-zinc-400 focus:outline-none transition-colors ${
                     isAddressValid === true
                       ? 'border-emerald-500'
                       : isAddressValid === false
                       ? 'border-red-500'
-                      : 'border-[var(--input-border)] focus:border-emerald-500'
+                      : 'border-zinc-200 dark:border-zinc-800 focus:border-black dark:focus:border-white'
                   }`}
                 />
 
                 {/* Validation Icon */}
                 <div className="absolute right-3 top-3.5">
                   {isAddressValid === true && (
-                    <CheckCircle2 size={16} className="text-[#14F195]" />
+                    <CheckCircle2 size={16} className="text-emerald-500" />
                   )}
                   {isAddressValid === false && (
-                    <AlertCircle size={16} className="text-red-400" />
+                    <AlertCircle size={16} className="text-red-500" />
                   )}
                 </div>
               </div>
 
               {isAddressValid === false && (
-                <div className="text-[11px] text-red-400 font-mono mt-1">
-                  Invalid Solana address (Must be valid Base58 public key)
+                <div className="text-[11px] text-red-500 font-mono mt-1 uppercase">
+                  Invalid Solana address format
                 </div>
               )}
             </div>
 
             {/* Feedback Alerts */}
             {sendSuccessHash && (
-              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-400 font-mono flex items-center gap-2">
+              <div className="p-3 rounded-none border border-emerald-500/40 bg-emerald-500/10 text-xs text-emerald-600 dark:text-emerald-400 font-mono flex items-center gap-2">
                 <CheckCircle2 size={16} className="shrink-0" />
                 <div className="truncate">
                   <span>Sent! Hash: </span>
@@ -390,7 +388,7 @@ export function QuickActionCard({
                     href={`https://solscan.io/tx/${sendSuccessHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="underline text-emerald-300 font-bold"
+                    className="underline font-bold"
                   >
                     {sendSuccessHash.slice(0, 12)}...
                   </a>
@@ -399,13 +397,13 @@ export function QuickActionCard({
             )}
 
             {sendError && (
-              <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-xs text-red-400 font-mono flex items-center gap-2">
+              <div className="p-3 rounded-none border border-red-500/40 bg-red-500/10 text-xs text-red-600 dark:text-red-400 font-mono flex items-center gap-2">
                 <AlertCircle size={16} className="shrink-0" />
                 <span>{sendError}</span>
               </div>
             )}
 
-            {/* Primary Action Button: SEND ASSETS */}
+            {/* Large, Prominent Primary Button matching Rednit spec */}
             <button
               type="button"
               onClick={handleExecuteSend}
@@ -415,16 +413,16 @@ export function QuickActionCard({
                 !hasSufficientBalance ||
                 !isOnline
               }
-              className={`w-full py-4 px-6 rounded-2xl font-bold text-sm tracking-wider uppercase transition-all duration-200 cursor-pointer shadow-lg ${
+              className={`w-full bg-black text-white dark:bg-white dark:text-black rounded-none h-12 uppercase font-bold tracking-wide transition-opacity cursor-pointer ${
                 isSending || !isAddressValid || !hasSufficientBalance || !isOnline
-                  ? 'bg-[var(--panel-hover)] text-[var(--text-muted)] border border-[var(--card-border)] cursor-not-allowed opacity-60'
-                  : 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/25 hover:shadow-emerald-500/35'
+                  ? 'opacity-40 cursor-not-allowed'
+                  : 'hover:opacity-90'
               }`}
             >
               {isSending ? (
-                'SIGNING ON SILICON...'
+                'PROCESSING TRANSACTION...'
               ) : !isOnline ? (
-                'OFFLINE — SWITCH TO AIR-GAP'
+                'OFFLINE — SWITCH TO OFFLINE VAULT'
               ) : !recipientTrimmed ? (
                 'ENTER RECIPIENT ADDRESS'
               ) : isAddressValid === false ? (
@@ -443,17 +441,17 @@ export function QuickActionCard({
         {/* ===================== TAB 2: RECEIVE ===================== */}
         {activeTab === 'receive' && (
           <div className="space-y-4 text-center">
-            <div className="text-xs text-[var(--text-muted)] font-mono">
-              Deposit SOL or SPL tokens to your sovereign Solana address
+            <div className="text-xs text-zinc-500 font-mono uppercase tracking-wider">
+              Deposit SOL or tokens to your Solana address
             </div>
 
-            {/* QR Code Presentation Box */}
-            <div className="p-4 rounded-3xl bg-white mx-auto w-48 h-48 flex items-center justify-center shadow-lg border border-zinc-200">
+            {/* QR Code Presentation Box with sharp 0px borders */}
+            <div className="p-4 rounded-none bg-white mx-auto w-48 h-48 flex items-center justify-center border border-zinc-200 dark:border-zinc-800">
               {qrSvg ? (
                 <svg
                   viewBox={`0 0 ${qrSvg.size} ${qrSvg.size}`}
                   className="w-full h-full"
-                  fill="#0A0A0C"
+                  fill="#000000"
                 >
                   <path d={qrSvg.path} />
                 </svg>
@@ -463,7 +461,7 @@ export function QuickActionCard({
             </div>
 
             {/* Address Display Box */}
-            <div className="p-3.5 rounded-2xl bg-[var(--input-bg)] border border-[var(--input-border)] text-xs font-mono text-[var(--text-primary)] break-all select-all">
+            <div className="p-3.5 rounded-none bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs font-mono text-black dark:text-white break-all select-all">
               {solAddress || 'No address loaded'}
             </div>
 
@@ -471,7 +469,7 @@ export function QuickActionCard({
               <button
                 type="button"
                 onClick={handleCopyReceive}
-                className="flex-1 py-3 px-4 rounded-2xl font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-black flex items-center justify-center gap-1.5 transition cursor-pointer shadow-md"
+                className="flex-1 h-12 rounded-none font-sans font-bold text-xs uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black flex items-center justify-center gap-1.5 transition-opacity hover:opacity-90 cursor-pointer"
               >
                 {copiedReceive ? (
                   <>
@@ -481,7 +479,7 @@ export function QuickActionCard({
                 ) : (
                   <>
                     <Copy size={14} />
-                    <span>RECEIVE SOL / COPY</span>
+                    <span>COPY ADDRESS</span>
                   </>
                 )}
               </button>
@@ -490,7 +488,7 @@ export function QuickActionCard({
                 <button
                   type="button"
                   onClick={() => onViewQr(solAddress)}
-                  className="p-3 rounded-2xl bg-[var(--panel-bg)] hover:bg-[var(--panel-hover)] border border-[var(--card-border)] text-[var(--text-primary)] transition cursor-pointer"
+                  className="h-12 w-12 flex items-center justify-center rounded-none bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white text-black dark:text-white transition-colors cursor-pointer"
                   title="Fullscreen QR"
                 >
                   <QrCode size={16} />
@@ -500,54 +498,56 @@ export function QuickActionCard({
           </div>
         )}
 
-        {/* ===================== TAB 3: AIR-GAP ===================== */}
+        {/* ===================== TAB 3: OFFLINE VAULT ===================== */}
         {activeTab === 'airgap' && (
           <div className="space-y-4">
-            <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30">
-              <div className="flex items-center gap-2 text-cyan-400 font-bold text-xs mb-1">
+            <div className="p-4 rounded-none border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
+              <div className="flex items-center gap-2 text-black dark:text-white font-sans font-bold text-xs uppercase tracking-wider mb-1">
                 <Radio size={16} />
-                <span>Zero-Network Air-Gap Defense</span>
+                <span>Zero-Network Offline Defense</span>
               </div>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 font-sans leading-relaxed">
                 Sign transactions completely offline on an air-gapped device. Transmit signatures via
-                high-density animated QR codes with zero RF or internet exposure.
+                optical QR sync with zero radio or network exposure.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-[var(--panel-bg)] border border-[var(--card-border)] space-y-2 text-xs font-mono">
-              <div className="flex justify-between text-[var(--text-muted)]">
-                <span>Protocol:</span>
-                <span className="text-[var(--text-primary)]">DOT-TX / Ed25519</span>
+            <div className="p-3.5 rounded-none border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 space-y-2 text-xs font-mono">
+              <div className="flex justify-between text-zinc-500">
+                <span className="uppercase text-[10px]">Protocol:</span>
+                <span className="text-black dark:text-white font-bold">Offline Vault Protocol</span>
               </div>
-              <div className="flex justify-between text-[var(--text-muted)]">
-                <span>Transport:</span>
-                <span className="text-cyan-400">UR 2.0 Optical QR</span>
+              <div className="flex justify-between text-zinc-500">
+                <span className="uppercase text-[10px]">Transport:</span>
+                <span className="text-black dark:text-white font-bold">Encrypted QR Sync</span>
               </div>
-              <div className="flex justify-between text-[var(--text-muted)]">
-                <span>Hardware:</span>
-                <span className="text-emerald-400">Silicon Enclave PRF</span>
+              <div className="flex justify-between text-zinc-500">
+                <span className="uppercase text-[10px]">Security:</span>
+                <span className="text-emerald-500 font-bold">Device Secure Enclave</span>
               </div>
             </div>
 
             <button
               type="button"
               onClick={onOpenAirGap}
-              className="w-full py-4 px-6 rounded-2xl font-bold text-sm tracking-wider uppercase bg-cyan-500 hover:bg-cyan-400 text-black shadow-lg shadow-cyan-500/25 transition cursor-pointer flex items-center justify-center gap-2"
+              className="w-full bg-black text-white dark:bg-white dark:text-black rounded-none h-12 uppercase font-bold tracking-wide transition-opacity hover:opacity-90 cursor-pointer flex items-center justify-center gap-2"
             >
               <Radio size={16} />
-              <span>LAUNCH AIR-GAP COLD VAULT</span>
+              <span>LAUNCH OFFLINE VAULT</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Card Footer Security Indicator */}
-      <div className="mt-5 pt-3.5 border-t border-[var(--card-border)] flex items-center justify-between text-[11px] font-mono text-[var(--text-muted)]">
-        <span className="flex items-center gap-1.5">
-          <Sparkles size={12} className="text-[#14F195]" />
-          <span>Client-Side Silicon Signer</span>
+      {/* Card Footer Security Indicator (Screenshot 4 Purged & Rednit Rebuilt) */}
+      <div className="mt-5 pt-3.5 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-[11px] font-mono text-zinc-500">
+        <span className="flex items-center gap-1.5 uppercase">
+          <ShieldCheck size={12} className="text-emerald-500" />
+          <span>Self-Custodial</span>
         </span>
-        <span className="text-emerald-400">0% Server Footprint</span>
+        <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">
+          Device Protected
+        </span>
       </div>
     </div>
   );

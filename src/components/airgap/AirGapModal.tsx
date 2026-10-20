@@ -169,7 +169,7 @@ export function AirGapModal({
       const parsed = deserializeDotTx(res.payload);
       if (!parsed.valid || !parsed.tx) {
         setScanStatus('error');
-        setScanMessage(parsed.error || 'Invalid .dot-tx payload');
+        setScanMessage(parsed.error || 'Invalid transaction payload');
         return;
       }
 
@@ -263,11 +263,11 @@ export function AirGapModal({
             <div>
               <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
                 Air-Gap Sovereign Relay
-                <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">
-                  v1 (.dot-tx)
+                <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-none border border-zinc-700 bg-zinc-800 text-zinc-300">
+                  Offline
                 </span>
               </h2>
-              <p className="text-xs text-zinc-400">Zero-network offline transaction exchange protocol</p>
+              <p className="text-xs text-zinc-400">Zero-network offline transaction exchange</p>
             </div>
           </div>
           <button
@@ -465,7 +465,7 @@ export function AirGapModal({
                         className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition"
                       >
                         {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
-                        {copied ? 'Copied JSON' : 'Copy .dot-tx'}
+                        {copied ? 'Copied' : 'Copy Offline Transaction'}
                       </button>
                       <button
                         onClick={downloadDotTxFile}
@@ -511,7 +511,7 @@ export function AirGapModal({
                     ) : (
                       <div className="space-y-3">
                         <Camera className="h-10 w-10 text-amber-400 mx-auto" />
-                        <h3 className="text-sm font-semibold text-white">Scan Unsigned .dot-tx QR Code</h3>
+                        <h3 className="text-sm font-semibold text-white">Scan Unsigned QR Code</h3>
                         <p className="text-xs text-zinc-400 max-w-sm mx-auto">
                           Use the device camera to scan animated QR codes from your online device.
                         </p>
@@ -525,7 +525,7 @@ export function AirGapModal({
                           </button>
                           <label className="cursor-pointer px-4 py-2.5 rounded-xl bg-zinc-800 text-zinc-200 font-semibold text-xs hover:bg-zinc-700 flex items-center gap-2">
                             <Upload className="h-4 w-4" />
-                            Upload .dot-tx File
+                            Upload Transaction File
                             <input type="file" accept=".dot-tx,.json" onChange={handleFileUpload} className="hidden" />
                           </label>
                         </div>
@@ -549,7 +549,7 @@ export function AirGapModal({
 
                   {/* Manual Paste fallback */}
                   <div className="rounded-xl border border-zinc-800 p-4 space-y-2 bg-zinc-900/30">
-                    <label className="text-xs text-zinc-400 font-semibold">Or Paste Raw .dot-tx JSON / Frame Chunk:</label>
+                    <label className="text-xs text-zinc-400 font-semibold">Or Paste Transaction Data:</label>
                     <textarea
                       value={scanInputText}
                       onChange={(e) => setScanInputText(e.target.value)}
@@ -658,7 +658,7 @@ export function AirGapModal({
                       </button>
                       <label className="cursor-pointer px-4 py-2.5 rounded-xl bg-zinc-800 text-zinc-200 font-semibold text-xs hover:bg-zinc-700 flex items-center gap-2">
                         <Upload className="h-4 w-4" />
-                        Upload Signed .dot-tx
+                        Upload Signed Transaction
                         <input type="file" accept=".dot-tx,.json" onChange={handleFileUpload} className="hidden" />
                       </label>
                     </div>
@@ -676,7 +676,7 @@ export function AirGapModal({
 
               {/* Manual Input Fallback */}
               <div className="rounded-xl border border-zinc-800 p-4 space-y-2 bg-zinc-900/30">
-                <label className="text-xs text-zinc-400 font-semibold">Or Paste Signed .dot-tx JSON:</label>
+                <label className="text-xs text-zinc-400 font-semibold">Or Paste Signed Transaction:</label>
                 <textarea
                   value={scanInputText}
                   onChange={(e) => setScanInputText(e.target.value)}

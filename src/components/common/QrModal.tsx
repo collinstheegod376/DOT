@@ -91,10 +91,10 @@ export function QrModal({
           </div>
         </div>
 
-        {/* Derivation Path */}
+        {/* Account Path */}
         {derivationPath && (
           <div className="mb-3 px-3 py-1.5 rounded-lg bg-[#14141A] border border-[#1F1F24] flex items-center justify-between text-xs">
-            <span className="text-zinc-500">Derivation Path:</span>
+            <span className="text-zinc-500">Account Path:</span>
             <span className="font-mono text-zinc-300 font-medium">{derivationPath}</span>
           </div>
         )}
@@ -102,7 +102,7 @@ export function QrModal({
         {/* Address Display */}
         <div className="p-3 rounded-xl bg-[#14141A] border border-[#1F1F24] mb-4">
           <div className="text-[11px] text-zinc-500 uppercase tracking-wider mb-1">
-            Receiving Address (EIP-55 / Bech32)
+            Receiving Address
           </div>
           <div className="font-mono text-xs text-zinc-200 break-all select-all leading-relaxed">
             {address}

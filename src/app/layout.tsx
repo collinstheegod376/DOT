@@ -1,17 +1,19 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { DM_Sans, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { OfflineProvider } from '../components/offline/OfflineProvider';
 import { ThemeProvider } from '../context/ThemeContext';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const dmSans = DM_Sans({
   subsets: ['latin'],
+  weight: ['400', '500', '700', '900'],
+  variable: '--font-dm-sans',
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-ibm-plex-mono',
 });
 
 export const metadata: Metadata = {
@@ -44,7 +46,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} dark h-full`} suppressHydrationWarning>
+    <html lang="en" className={`${dmSans.variable} ${ibmPlexMono.variable} dark h-full`} suppressHydrationWarning>
       <body className="crypto-grid min-h-full flex flex-col antialiased selection:bg-[#14F195]/20 selection:text-[#14F195]">
         <ThemeProvider>
           <OfflineProvider>

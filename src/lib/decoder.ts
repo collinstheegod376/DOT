@@ -78,7 +78,7 @@ export function decodeTransactionIntent(params: {
       warnings.push({
         level: 'warning',
         title: 'Legacy Bitcoin Address',
-        description: 'Recipient uses legacy base58 address. Higher miner fees may apply.',
+        description: 'Recipient uses legacy address format. Higher network fees may apply.',
       });
     } else if (cleanRecipient.length > 0) {
       warnings.push({
@@ -93,13 +93,13 @@ export function decodeTransactionIntent(params: {
       warnings.push({
         level: 'info',
         title: 'Solana Address Verified',
-        description: 'Recipient matches cryptographic Ed25519 public key format.',
+        description: 'Recipient is a valid Solana network address.',
       });
     } else if (cleanRecipient.length > 0) {
       warnings.push({
         level: 'danger',
         title: 'Invalid Solana Address',
-        description: 'Address is not a valid 32-byte Base58 Solana public key.',
+        description: 'Address is not a valid Solana recipient address.',
       });
     }
   }
