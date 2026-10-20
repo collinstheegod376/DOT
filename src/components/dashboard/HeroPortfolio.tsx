@@ -65,22 +65,22 @@ export function HeroPortfolio({
   const isPositive = solChange >= 0;
 
   return (
-    <div className="relative rounded-none p-6 sm:p-8 transition-colors duration-150 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800">
+    <div className="relative rounded-none p-6 sm:p-8 transition-colors duration-150 bg-white dark:bg-[#0F0F10] border border-black dark:border-[#353536]">
       {/* Top Bar: Vault Status & Solana Address */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-5 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-5 border-b border-black/10 dark:border-[#353536]">
         <div className="flex items-center gap-2.5">
-          <div className="w-2 h-2 rounded-none bg-emerald-500" />
-          <span className="text-xs font-sans uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-bold">
+          <div className="w-2 h-2 rounded-none bg-black dark:bg-white" />
+          <span className="text-xs font-sans uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-black">
             SOLANA PORTFOLIO
           </span>
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-none border border-zinc-300 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 uppercase tracking-widest">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-none border border-black dark:border-[#353536] text-black dark:text-white uppercase tracking-widest font-bold">
             MAINNET
           </span>
         </div>
 
         {/* Truncated Address with Copy, QR, Solscan */}
         {solAddress && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-none border border-zinc-200 dark:border-zinc-800 text-xs font-mono text-zinc-600 dark:text-zinc-400 self-start sm:self-auto bg-zinc-50 dark:bg-zinc-900/50">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-none border border-black dark:border-[#353536] text-xs font-mono text-zinc-800 dark:text-zinc-200 self-start sm:self-auto bg-[#F7F7F7] dark:bg-[#1D1D1E]">
             <span className="text-zinc-500 mr-1">{truncatedAddress}</span>
 
             <button
@@ -97,7 +97,7 @@ export function HeroPortfolio({
               title="Copy Solana Address"
             >
               {copied ? (
-                <Check size={13} className="text-emerald-500" />
+                <Check size={13} className="text-black dark:text-white" />
               ) : (
                 <Copy size={13} />
               )}
@@ -119,12 +119,12 @@ export function HeroPortfolio({
       {/* Main Net Worth Display + Timeframe Selector */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
-          <div className="text-[11px] font-sans font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-1">
+          <div className="text-[11px] font-sans font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mb-1">
             TOTAL NET WORTH
           </div>
           {/* DM Sans 900 display net worth font with tight tracking (-0.03em) */}
           <div
-            className="text-4xl sm:text-5xl lg:text-6xl font-sans font-[900] text-black dark:text-white tracking-[-0.03em]"
+            className="text-4xl sm:text-5xl lg:text-6xl font-sans font-black text-black dark:text-white tracking-[-0.03em]"
             style={{ letterSpacing: '-0.03em' }}
           >
             ${totalFiatBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -135,21 +135,21 @@ export function HeroPortfolio({
             <div className="flex items-center gap-1 font-mono text-zinc-600 dark:text-zinc-400">
               <span className="font-bold text-black dark:text-white">{solBalance}</span>
               <span>SOL</span>
-              <span className="text-zinc-300 dark:text-zinc-700">•</span>
+              <span className="text-zinc-400 dark:text-zinc-600">•</span>
               <span>≈ ${solFiat.toFixed(2)} USD</span>
             </div>
 
             {/* Price & 24h PnL badge */}
             <div className="flex items-center gap-1.5 font-mono text-xs">
-              <span className="text-zinc-400">
+              <span className="text-zinc-500">
                 ${solPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </span>
 
               <span
-                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-none font-semibold text-[10px] border ${
+                className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-none font-bold text-[10px] border ${
                   isPositive
-                    ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
-                    : 'border-red-500/30 text-red-600 dark:text-red-400 bg-red-500/10'
+                    ? 'border-black dark:border-white text-black dark:text-white bg-black/5 dark:bg-white/10'
+                    : 'border-zinc-500 text-zinc-700 dark:text-zinc-300 bg-zinc-200/50 dark:bg-zinc-800/50'
                 }`}
               >
                 {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
@@ -163,7 +163,7 @@ export function HeroPortfolio({
         </div>
 
         {/* Timeframe Filter Buttons: DAY, WEEK, MONTH, YEAR, ALL with sharp 1px borders and black/white inversion */}
-        <div className="flex rounded-none border border-zinc-200 dark:border-zinc-800 p-0.5 self-start sm:self-auto text-xs font-mono">
+        <div className="flex rounded-none border border-black dark:border-[#353536] p-0.5 self-start sm:self-auto text-xs font-mono">
           {(['DAY', 'WEEK', 'MONTH', 'YEAR', 'ALL'] as Timeframe[]).map((tf) => {
             const isActive = timeframe === tf;
             return (
@@ -184,7 +184,7 @@ export function HeroPortfolio({
       </div>
 
       {/* SVG Area Chart with clean lines and flat background */}
-      <div className="relative w-full h-32 sm:h-44 my-6 rounded-none border border-zinc-100 dark:border-zinc-900 bg-zinc-50/50 dark:bg-zinc-950/50 p-2">
+      <div className="relative w-full h-32 sm:h-44 my-6 rounded-none border border-black/10 dark:border-[#353536] bg-[#F7F7F7]/60 dark:bg-[#1D1D1E]/40 p-2">
         <svg
           viewBox="0 0 500 120"
           preserveAspectRatio="none"
@@ -192,7 +192,7 @@ export function HeroPortfolio({
         >
           <defs>
             <linearGradient id="rednit-hero-chart-glow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="currentColor" stopOpacity="0.10" />
+              <stop offset="0%" stopColor="currentColor" stopOpacity="0.08" />
               <stop offset="100%" stopColor="currentColor" stopOpacity="0.00" />
             </linearGradient>
           </defs>
@@ -226,11 +226,11 @@ export function HeroPortfolio({
 
       {/* Zero balance indicator */}
       {parseFloat(solBalance) === 0 && totalFiatBalance === 0 && (
-        <div className="p-3.5 rounded-none border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 mb-6 flex items-start gap-3">
+        <div className="p-3.5 rounded-none border border-black/10 dark:border-[#353536] bg-[#F7F7F7] dark:bg-[#1D1D1E] mb-6 flex items-start gap-3">
           <ShieldCheck size={16} className="text-black dark:text-white shrink-0 mt-0.5" />
           <div className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 font-sans">
-            <span className="font-bold text-black dark:text-white uppercase tracking-wider">Vault Ready:</span> Real on-chain balance is $0.00.
-            Deposit SOL or tokens to your Solana address to activate real-time tracking.
+            <span className="font-black text-black dark:text-white uppercase tracking-wider">Vault Ready:</span> On-chain balance verified at $0.00.
+            Deposit SOL or supported assets to your Solana address to activate portfolio monitoring.
           </div>
         </div>
       )}
@@ -239,38 +239,38 @@ export function HeroPortfolio({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
         <button
           onClick={() => onSend('SOL')}
-          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-bold text-xs uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition-opacity cursor-pointer border border-black dark:border-white"
+          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-black text-xs uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition-opacity cursor-pointer border border-black dark:border-white"
         >
           <ArrowUpRight size={16} strokeWidth={2.5} />
-          <span>Send</span>
+          <span>SEND</span>
         </button>
 
         <button
           onClick={() => onReceive('SOL')}
-          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-bold text-xs uppercase tracking-wider bg-white dark:bg-black text-black dark:text-white border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-colors cursor-pointer"
+          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-black text-xs uppercase tracking-wider bg-white dark:bg-[#0F0F10] text-black dark:text-white border border-black dark:border-[#353536] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors cursor-pointer"
         >
           <ArrowDownLeft size={16} strokeWidth={2.5} />
-          <span>Receive</span>
+          <span>RECEIVE</span>
         </button>
 
         <button
           onClick={onOpenAirGap}
-          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-bold text-xs uppercase tracking-wider bg-white dark:bg-black text-black dark:text-white border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-colors cursor-pointer"
+          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-black text-xs uppercase tracking-wider bg-white dark:bg-[#0F0F10] text-black dark:text-white border border-black dark:border-[#353536] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors cursor-pointer"
         >
           <Radio size={15} />
-          <span>Offline Vault</span>
+          <span>OFFLINE VAULT</span>
         </button>
 
         <button
           onClick={refreshBalances}
           disabled={isRefreshingBalances || !isOnline}
-          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-bold text-xs uppercase tracking-wider bg-white dark:bg-black text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+          className="h-12 flex items-center justify-center gap-2 px-4 rounded-none font-sans font-black text-xs uppercase tracking-wider bg-white dark:bg-[#0F0F10] text-zinc-700 dark:text-zinc-300 border border-black dark:border-[#353536] hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white transition-colors cursor-pointer disabled:opacity-40"
         >
           <RefreshCw
             size={14}
             className={isRefreshingBalances ? 'animate-spin' : ''}
           />
-          <span>{isRefreshingBalances ? 'Syncing...' : 'Sync'}</span>
+          <span>{isRefreshingBalances ? 'SYNCING...' : 'SYNC'}</span>
         </button>
       </div>
     </div>

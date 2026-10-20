@@ -81,7 +81,7 @@ export function ExecutiveNav({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md border-b transition-colors duration-150 bg-white/90 dark:bg-black/90 border-zinc-200 dark:border-zinc-800">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-md border-b transition-colors duration-150 bg-white/95 dark:bg-[#0F0F10]/95 border-black dark:border-[#353536]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* LEFT: Monochromatic Brand Logo + DM Sans Uppercase Links */}
         <div className="flex items-center gap-6 lg:gap-8">
@@ -96,10 +96,10 @@ export function ExecutiveNav({
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="font-sans font-extrabold tracking-tight text-base sm:text-lg text-black dark:text-white uppercase">
+              <span className="font-sans font-black tracking-tight text-base sm:text-lg text-black dark:text-white uppercase">
                 DOT
               </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-none border border-zinc-300 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 uppercase tracking-widest hidden sm:inline-block">
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-none border border-black dark:border-[#353536] text-black dark:text-white uppercase tracking-widest hidden sm:inline-block">
                 SOLANA
               </span>
             </div>
@@ -116,7 +116,7 @@ export function ExecutiveNav({
                   className={`px-3 py-1.5 rounded-none text-xs font-sans font-bold tracking-wider uppercase transition-colors cursor-pointer border ${
                     isActive
                       ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
-                      : 'text-zinc-600 dark:text-zinc-400 border-transparent hover:border-zinc-300 dark:hover:border-zinc-800 hover:text-black dark:hover:text-white'
+                      : 'text-zinc-600 dark:text-zinc-400 border-transparent hover:border-black dark:hover:border-[#353536] hover:text-black dark:hover:text-white'
                   }`}
                 >
                   {item.label}
@@ -136,39 +136,39 @@ export function ExecutiveNav({
                 setClusterDropdownOpen(false);
                 setUserMenuOpen(false);
               }}
-              className="p-2 h-10 w-10 flex items-center justify-center rounded-none border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white transition-colors cursor-pointer relative"
+              className="p-2 h-10 w-10 flex items-center justify-center rounded-none border border-black dark:border-[#353536] text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-black dark:hover:border-white transition-colors cursor-pointer relative"
               title="Notifications"
             >
               <Bell size={16} />
-              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-none bg-emerald-500" />
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-none bg-black dark:bg-white" />
             </button>
 
             {/* Notifications Popover */}
             {notificationsOpen && (
-              <div className="absolute right-0 mt-1 w-72 sm:w-80 rounded-none bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-3 z-50 animate-in fade-in duration-100">
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-zinc-200 dark:border-zinc-800">
-                  <span className="text-xs font-bold font-sans tracking-wider text-black dark:text-white uppercase">
+              <div className="absolute right-0 mt-1 w-72 sm:w-80 rounded-none bg-white dark:bg-[#0F0F10] border border-black dark:border-[#353536] p-3 z-50 animate-in fade-in duration-100">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-black dark:border-[#353536]">
+                  <span className="text-xs font-sans font-black tracking-wider text-black dark:text-white uppercase">
                     NOTIFICATIONS
                   </span>
-                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-none border border-emerald-500/30">
-                    ALL CLEAR
+                  <span className="text-[10px] font-mono text-black dark:text-white px-1.5 py-0.5 rounded-none border border-black dark:border-[#353536] uppercase tracking-wider font-bold">
+                    SYSTEM SECURE
                   </span>
                 </div>
                 <div className="space-y-2 text-xs">
-                  <div className="p-2.5 rounded-none border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-start gap-2.5">
-                    <Shield size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                  <div className="p-2.5 rounded-none border border-black/10 dark:border-[#353536] bg-[#F7F7F7] dark:bg-[#1D1D1E] flex items-start gap-2.5">
+                    <Shield size={16} className="text-black dark:text-white shrink-0 mt-0.5" />
                     <div>
-                      <div className="font-bold text-black dark:text-white font-sans">Self-Custodial Vault Active</div>
-                      <div className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 font-mono">
-                        Keys generated and stored on your device. Zero server access.
+                      <div className="font-sans font-bold text-black dark:text-white uppercase tracking-wider text-[11px]">Sovereign Vault Active</div>
+                      <div className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 font-mono">
+                        Hardware-isolated keys stored on device. Zero external access.
                       </div>
                     </div>
                   </div>
-                  <div className="p-2.5 rounded-none border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex items-start gap-2.5">
-                    <Wifi size={16} className="text-cyan-500 shrink-0 mt-0.5" />
+                  <div className="p-2.5 rounded-none border border-black/10 dark:border-[#353536] bg-[#F7F7F7] dark:bg-[#1D1D1E] flex items-start gap-2.5">
+                    <Wifi size={16} className="text-black dark:text-white shrink-0 mt-0.5" />
                     <div>
-                      <div className="font-bold text-black dark:text-white font-sans">Solana Mainnet Linked</div>
-                      <div className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 font-mono">
+                      <div className="font-sans font-bold text-black dark:text-white uppercase tracking-wider text-[11px]">Solana Mainnet Linked</div>
+                      <div className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 font-mono">
                         Real-time on-chain balance synchronization active.
                       </div>
                     </div>
@@ -186,17 +186,17 @@ export function ExecutiveNav({
                 setNotificationsOpen(false);
                 setUserMenuOpen(false);
               }}
-              className="h-10 flex items-center gap-2 px-3 rounded-none bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white text-xs font-mono font-medium text-black dark:text-white transition-colors cursor-pointer"
+              className="h-10 flex items-center gap-2 px-3 rounded-none bg-white dark:bg-[#0F0F10] border border-black dark:border-[#353536] hover:border-black dark:hover:border-white text-xs font-mono font-medium text-black dark:text-white transition-colors cursor-pointer"
             >
-              <div className="w-2 h-2 rounded-none bg-emerald-500 shrink-0" />
-              <span className="font-mono tracking-wide uppercase text-[11px]">SOLANA MAINNET</span>
+              <div className="w-2 h-2 rounded-none bg-black dark:bg-white shrink-0" />
+              <span className="font-mono tracking-wide uppercase text-[11px] font-bold">SOLANA MAINNET</span>
               <ChevronDown size={13} className="text-zinc-400" />
             </button>
 
             {/* Cluster Switcher Dropdown */}
             {clusterDropdownOpen && (
-              <div className="absolute right-0 mt-1 w-56 rounded-none bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-1 z-50 animate-in fade-in duration-100">
-                <div className="text-[10px] font-mono text-zinc-500 px-2.5 py-1 uppercase tracking-wider">
+              <div className="absolute right-0 mt-1 w-56 rounded-none bg-white dark:bg-[#0F0F10] border border-black dark:border-[#353536] p-1 z-50 animate-in fade-in duration-100">
+                <div className="text-[10px] font-mono text-zinc-500 px-2.5 py-1 uppercase tracking-wider font-bold">
                   Network Cluster
                 </div>
                 {[
@@ -213,12 +213,12 @@ export function ExecutiveNav({
                     className={`w-full flex items-center justify-between px-2.5 py-2 rounded-none text-xs transition-colors cursor-pointer border ${
                       activeNetwork === net.id
                         ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-bold'
-                        : 'border-transparent text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                        : 'border-transparent text-zinc-700 dark:text-zinc-300 hover:bg-[#F7F7F7] dark:hover:bg-[#1D1D1E]'
                     }`}
                   >
                     <div className="text-left font-mono">
-                      <div className="text-xs">{net.label}</div>
-                      <div className="text-[10px] text-zinc-400">{net.desc}</div>
+                      <div className="text-xs font-bold">{net.label}</div>
+                      <div className="text-[10px] text-zinc-500">{net.desc}</div>
                     </div>
                     {activeNetwork === net.id && <Check size={14} />}
                   </button>
@@ -230,7 +230,7 @@ export function ExecutiveNav({
           {/* Theme Toggle Button (Light / Dark) */}
           <button
             onClick={toggleTheme}
-            className="h-10 w-10 flex items-center justify-center rounded-none border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white text-zinc-600 dark:text-zinc-300 transition-colors cursor-pointer"
+            className="h-10 w-10 flex items-center justify-center rounded-none border border-black dark:border-[#353536] hover:border-black dark:hover:border-white text-zinc-600 dark:text-zinc-300 transition-colors cursor-pointer"
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             aria-label="Toggle theme"
           >
@@ -249,7 +249,7 @@ export function ExecutiveNav({
                 setNotificationsOpen(false);
                 setClusterDropdownOpen(false);
               }}
-              className="h-10 flex items-center gap-2 px-2.5 rounded-none bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-colors cursor-pointer select-none"
+              className="h-10 flex items-center gap-2 px-2.5 rounded-none bg-white dark:bg-[#0F0F10] border border-black dark:border-[#353536] hover:border-black dark:hover:border-white transition-colors cursor-pointer select-none"
             >
               {/* Address initials block */}
               <div className="w-5 h-5 rounded-none bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-mono font-bold text-[10px]">
@@ -268,7 +268,7 @@ export function ExecutiveNav({
                 title="Copy Address"
               >
                 {copied ? (
-                  <Check size={13} className="text-emerald-500" />
+                  <Check size={13} className="text-black dark:text-white" />
                 ) : (
                   <Copy size={13} />
                 )}
@@ -286,8 +286,8 @@ export function ExecutiveNav({
 
             {/* User Menu Dropdown */}
             {userMenuOpen && (
-              <div className="absolute right-0 mt-1 w-64 rounded-none bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 p-2 z-50 animate-in fade-in duration-100">
-                <div className="p-2 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 mb-2 font-mono text-[11px] break-all select-all text-zinc-700 dark:text-zinc-300">
+              <div className="absolute right-0 mt-1 w-64 rounded-none bg-white dark:bg-[#0F0F10] border border-black dark:border-[#353536] p-2 z-50 animate-in fade-in duration-100">
+                <div className="p-2 border border-black/10 dark:border-[#353536] bg-[#F7F7F7] dark:bg-[#1D1D1E] mb-2 font-mono text-[11px] break-all select-all text-zinc-800 dark:text-zinc-200">
                   {solAddress || 'No address loaded'}
                 </div>
 
@@ -296,10 +296,10 @@ export function ExecutiveNav({
                     handleQrClick({ stopPropagation: () => {} } as React.MouseEvent);
                     setUserMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-none text-xs text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer font-sans"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-none text-xs text-black dark:text-white hover:bg-[#F7F7F7] dark:hover:bg-[#1D1D1E] transition-colors cursor-pointer font-sans uppercase font-bold tracking-wider"
                 >
                   <QrCode size={14} />
-                  <span>Show Address QR</span>
+                  <span>SHOW ADDRESS QR</span>
                 </button>
 
                 {solAddress && (
@@ -307,10 +307,10 @@ export function ExecutiveNav({
                     href={`https://solscan.io/account/${solAddress}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-none text-xs text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors font-sans"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-none text-xs text-black dark:text-white hover:bg-[#F7F7F7] dark:hover:bg-[#1D1D1E] transition-colors font-sans uppercase font-bold tracking-wider"
                   >
                     <ExternalLink size={14} />
-                    <span>View on Solscan</span>
+                    <span>VIEW ON SOLSCAN</span>
                   </a>
                 )}
 
@@ -320,24 +320,24 @@ export function ExecutiveNav({
                       onOpenSettings();
                       setUserMenuOpen(false);
                     }}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-none text-xs text-black dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer font-sans"
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-none text-xs text-black dark:text-white hover:bg-[#F7F7F7] dark:hover:bg-[#1D1D1E] transition-colors cursor-pointer font-sans uppercase font-bold tracking-wider"
                   >
                     <Shield size={14} />
-                    <span>Backup & Security</span>
+                    <span>BACKUP & SECURITY</span>
                   </button>
                 )}
 
-                <div className="border-t border-zinc-200 dark:border-zinc-800 my-1" />
+                <div className="border-t border-black/10 dark:border-[#353536] my-1" />
 
                 <button
                   onClick={() => {
                     lockVault();
                     setUserMenuOpen(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-none text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer font-sans font-bold"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-none text-xs text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors cursor-pointer font-sans uppercase font-black tracking-wider"
                 >
                   <Lock size={14} />
-                  <span>Lock Vault</span>
+                  <span>LOCK VAULT</span>
                 </button>
               </div>
             )}

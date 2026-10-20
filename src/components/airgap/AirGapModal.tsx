@@ -224,7 +224,7 @@ export function AirGapModal({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `tx-${currentTx.tx_id.slice(2, 10)}.dot-tx`;
+    a.download = `tx-${currentTx.tx_id.slice(2, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -252,22 +252,22 @@ export function AirGapModal({
   const frameInfo = parseChunkFrame(currentFrameText);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-      <div className="w-full max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="w-full max-w-2xl rounded-none border border-black dark:border-[#353536] bg-white dark:bg-[#0F0F10] text-black dark:text-white overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-800/80 px-6 py-4 bg-zinc-900/50">
+        <div className="flex items-center justify-between border-b border-black/10 dark:border-[#353536] px-6 py-4 bg-[#F7F7F7] dark:bg-[#1D1D1E]">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <div className="flex h-9 w-9 items-center justify-center rounded-none bg-black text-white dark:bg-white dark:text-black border border-black dark:border-white">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                Air-Gap Sovereign Relay
-                <span className="text-xs font-mono font-normal px-2 py-0.5 rounded-none border border-zinc-700 bg-zinc-800 text-zinc-300">
-                  Offline
+              <h2 className="text-base font-sans font-black tracking-tight text-black dark:text-white uppercase flex items-center gap-2">
+                AIR-GAP SOVEREIGN RELAY
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-none border border-black dark:border-[#353536] text-black dark:text-white uppercase">
+                  OFFLINE ISOLATION
                 </span>
               </h2>
-              <p className="text-xs text-zinc-400">Zero-network offline transaction exchange</p>
+              <p className="text-xs text-zinc-500 font-mono">Zero-network hardware isolated transaction signing</p>
             </div>
           </div>
           <button
@@ -275,53 +275,54 @@ export function AirGapModal({
               stopCamera();
               onClose();
             }}
-            className="rounded-lg p-2 text-zinc-400 hover:bg-zinc-800 hover:text-white transition"
+            className="rounded-none p-2 text-zinc-500 hover:text-black dark:hover:text-white border border-transparent hover:border-black dark:hover:border-white transition cursor-pointer"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="grid grid-cols-3 border-b border-zinc-800 text-xs font-semibold bg-zinc-900/30">
+        <div className="grid grid-cols-3 border-b border-black/10 dark:border-[#353536] text-xs font-sans font-black uppercase tracking-wider bg-[#F7F7F7] dark:bg-[#1D1D1E]">
           <button
             onClick={() => {
               stopCamera();
               setActiveTab('export_unsigned');
             }}
-            className={`py-3 px-2 flex items-center justify-center gap-2 border-b-2 transition ${
+            className={`py-3 px-2 flex items-center justify-center gap-2 border-b-2 transition cursor-pointer ${
               activeTab === 'export_unsigned'
-                ? 'border-amber-500 text-amber-400 bg-amber-500/5'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                ? 'border-black dark:border-white text-black dark:text-white bg-black/5 dark:bg-white/5 font-black'
+                : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <QrCode className="h-4 w-4" />
-            1. Export QR (Online)
+            1. EXPORT TRANSACTION
           </button>
           <button
             onClick={() => {
               setActiveTab('offline_sign');
             }}
-            className={`py-3 px-2 flex items-center justify-center gap-2 border-b-2 transition ${
+            className={`py-3 px-2 flex items-center justify-center gap-2 border-b-2 transition cursor-pointer ${
               activeTab === 'offline_sign'
-                ? 'border-amber-500 text-amber-400 bg-amber-500/5'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                ? 'border-black dark:border-white text-black dark:text-white bg-black/5 dark:bg-white/5 font-black'
+                : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <WifiOff className="h-4 w-4" />
-            2. Sign (Air-Gapped)
+            2. OFFLINE SIGN
           </button>
           <button
             onClick={() => {
               setActiveTab('import_signed');
             }}
-            className={`py-3 px-2 flex items-center justify-center gap-2 border-b-2 transition ${
+            className={`py-3 px-2 flex items-center justify-center gap-2 border-b-2 transition cursor-pointer ${
               activeTab === 'import_signed'
-                ? 'border-amber-500 text-amber-400 bg-amber-500/5'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                ? 'border-black dark:border-white text-black dark:text-white bg-black/5 dark:bg-white/5 font-black'
+                : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
             }`}
           >
             <Wifi className="h-4 w-4" />
-            3. Import Signed
+            3. IMPORT SIGNED
           </button>
         </div>
 
@@ -331,39 +332,41 @@ export function AirGapModal({
           {activeTab === 'export_unsigned' && (
             <div className="space-y-6">
               {!currentTx ? (
-                <div className="rounded-xl border border-dashed border-zinc-800 p-8 text-center space-y-3">
-                  <FileCode className="h-10 w-10 text-zinc-600 mx-auto" />
-                  <p className="text-sm text-zinc-400">No transaction is currently loaded for export.</p>
+                <div className="rounded-none border border-dashed border-black/20 dark:border-[#353536] p-8 text-center space-y-3 bg-[#F7F7F7]/60 dark:bg-[#1D1D1E]/40">
+                  <FileCode className="h-10 w-10 text-zinc-400 mx-auto" />
+                  <p className="text-xs font-mono font-bold text-black dark:text-white uppercase tracking-wider">
+                    NO TRANSACTION LOADED FOR EXPORT
+                  </p>
                   <button
                     onClick={() => setActiveTab('offline_sign')}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
+                    className="px-4 py-2 text-xs font-sans font-black uppercase tracking-wider rounded-none bg-black text-white dark:bg-white dark:text-black border border-black dark:border-white transition cursor-pointer"
                   >
-                    Import or Create a Transaction
+                    IMPORT OR CREATE TRANSACTION
                   </button>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6 items-center">
                   {/* QR Display Card */}
-                  <div className="flex flex-col items-center bg-zinc-900/80 rounded-2xl p-5 border border-zinc-800/80 shadow-inner">
+                  <div className="flex flex-col items-center bg-[#F7F7F7] dark:bg-[#1D1D1E] rounded-none p-5 border border-black/10 dark:border-[#353536]">
                     <div 
-                      className="bg-white p-3 rounded-xl shadow-lg"
+                      className="bg-white p-3 rounded-none border border-black dark:border-[#353536]"
                       dangerouslySetInnerHTML={{ __html: currentQrSvg }}
                     />
 
                     {/* Chunking / Carousel Controls */}
                     {frames.length > 1 && (
                       <div className="w-full mt-4 space-y-2">
-                        <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                          <span className="flex items-center gap-1">
-                            <Layers className="h-3.5 w-3.5 text-amber-400" />
-                            Frame {frameInfo?.index || currentFrameIdx + 1} of {frames.length}
+                        <div className="flex items-center justify-between text-xs font-mono text-zinc-500">
+                          <span className="flex items-center gap-1 font-bold">
+                            <Layers className="h-3.5 w-3.5 text-black dark:text-white" />
+                            FRAME {frameInfo?.index || currentFrameIdx + 1} OF {frames.length}
                           </span>
-                          <span>{fps} FPS</span>
+                          <span className="font-bold">{fps} FPS</span>
                         </div>
                         {/* Progress Bar */}
-                        <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-none overflow-hidden">
                           <div 
-                            className="h-full bg-amber-500 transition-all duration-200"
+                            className="h-full bg-black dark:bg-white transition-all duration-200 rounded-none"
                             style={{ width: `${(((currentFrameIdx + 1) / frames.length) * 100)}%` }}
                           />
                         </div>
@@ -371,26 +374,26 @@ export function AirGapModal({
                         <div className="flex items-center justify-center gap-3 pt-1">
                           <button
                             onClick={() => setCurrentFrameIdx((prev) => (prev - 1 + frames.length) % frames.length)}
-                            className="p-1 rounded bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                            className="p-1 rounded-none border border-black/20 dark:border-[#353536] bg-white dark:bg-[#0F0F10] text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition cursor-pointer"
                           >
                             <ChevronLeft className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => setIsPlaying(!isPlaying)}
-                            className="p-1.5 rounded-lg bg-amber-500 text-black font-semibold hover:bg-amber-400"
+                            className="p-1.5 rounded-none bg-black text-white dark:bg-white dark:text-black border border-black dark:border-white font-bold transition cursor-pointer"
                           >
                             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                           </button>
                           <button
                             onClick={() => setCurrentFrameIdx((prev) => (prev + 1) % frames.length)}
-                            className="p-1 rounded bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                            className="p-1 rounded-none border border-black/20 dark:border-[#353536] bg-white dark:bg-[#0F0F10] text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition cursor-pointer"
                           >
                             <ChevronRight className="h-4 w-4" />
                           </button>
                           <select
                             value={fps}
                             onChange={(e) => setFps(Number(e.target.value))}
-                            className="text-xs bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-zinc-300"
+                            className="text-xs bg-white dark:bg-[#0F0F10] border border-black dark:border-[#353536] rounded-none px-2 py-1 text-black dark:text-white font-mono"
                           >
                             <option value={1}>1 fps</option>
                             <option value={3}>3 fps (Normal)</option>
@@ -401,58 +404,56 @@ export function AirGapModal({
                     )}
 
                     {frames.length === 1 && (
-                      <p className="text-[11px] text-zinc-500 mt-3 font-mono">Single frame payload (fits in 1 QR)</p>
+                      <p className="text-[11px] text-zinc-500 mt-3 font-mono uppercase font-bold">Single frame optical payload</p>
                     )}
                   </div>
 
                   {/* Intent & Actions */}
                   <div className="space-y-4">
-                    <div className="rounded-xl bg-zinc-900/60 border border-zinc-800 p-4 space-y-3">
+                    <div className="rounded-none bg-[#F7F7F7] dark:bg-[#1D1D1E] border border-black/10 dark:border-[#353536] p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs uppercase font-semibold text-zinc-400">Decoded Intent</span>
-                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md ${
-                          currentTx.signatures.length > 0 
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        }`}>
-                          {currentTx.signatures.length > 0 ? 'Signed' : 'Unsigned'}
+                        <span className="text-xs uppercase font-sans font-black tracking-wider text-black dark:text-white">
+                          TRANSACTION INTENT
+                        </span>
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-none border border-black dark:border-white text-black dark:text-white uppercase">
+                          {currentTx.signatures.length > 0 ? 'SIGNED' : 'UNSIGNED'}
                         </span>
                       </div>
 
                       <div className="space-y-2 text-xs">
-                        <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
-                          <span className="text-zinc-500">Chain:</span>
-                          <span className="font-mono text-zinc-200 uppercase">{currentTx.chain} (Net {currentTx.network_id})</span>
+                        <div className="flex justify-between border-b border-black/10 dark:border-[#353536] pb-1.5">
+                          <span className="text-zinc-500 font-mono uppercase text-[10px]">Network:</span>
+                          <span className="font-mono text-black dark:text-white font-bold uppercase">{currentTx.chain} (Cluster {currentTx.network_id})</span>
                         </div>
-                        <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
-                          <span className="text-zinc-500">Amount:</span>
-                          <span className="font-mono font-bold text-white">{currentTx.decoded_intent.amount} {currentTx.decoded_intent.symbol}</span>
+                        <div className="flex justify-between border-b border-black/10 dark:border-[#353536] pb-1.5">
+                          <span className="text-zinc-500 font-mono uppercase text-[10px]">Amount:</span>
+                          <span className="font-mono font-bold text-black dark:text-white">{currentTx.decoded_intent.amount} {currentTx.decoded_intent.symbol}</span>
                         </div>
-                        <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
-                          <span className="text-zinc-500">Recipient:</span>
-                          <span className="font-mono text-zinc-300 truncate max-w-[170px]" title={currentTx.decoded_intent.to}>
+                        <div className="flex justify-between border-b border-black/10 dark:border-[#353536] pb-1.5">
+                          <span className="text-zinc-500 font-mono uppercase text-[10px]">Recipient:</span>
+                          <span className="font-mono text-black dark:text-white font-bold truncate max-w-[170px]" title={currentTx.decoded_intent.to}>
                             {currentTx.decoded_intent.to}
                           </span>
                         </div>
-                        <div className="flex justify-between border-b border-zinc-800/60 pb-1.5">
-                          <span className="text-zinc-500">Sender:</span>
-                          <span className="font-mono text-zinc-300 truncate max-w-[170px]" title={currentTx.decoded_intent.from}>
+                        <div className="flex justify-between border-b border-black/10 dark:border-[#353536] pb-1.5">
+                          <span className="text-zinc-500 font-mono uppercase text-[10px]">Sender:</span>
+                          <span className="font-mono text-zinc-600 dark:text-zinc-400 truncate max-w-[170px]" title={currentTx.decoded_intent.from}>
                             {currentTx.decoded_intent.from}
                           </span>
                         </div>
                         {currentTx.expires_at && (
-                          <div className="flex justify-between text-zinc-400">
-                            <span>Status:</span>
-                            <span className={isDotTxExpired(currentTx) ? 'text-red-400 font-bold' : 'text-emerald-400'}>
-                              {isDotTxExpired(currentTx) ? 'EXPIRED' : 'Valid'}
+                          <div className="flex justify-between text-zinc-500 font-mono">
+                            <span className="uppercase text-[10px]">Status:</span>
+                            <span className={isDotTxExpired(currentTx) ? 'text-zinc-500 font-bold' : 'text-black dark:text-white font-bold'}>
+                              {isDotTxExpired(currentTx) ? 'EXPIRED' : 'VALID'}
                             </span>
                           </div>
                         )}
                       </div>
 
                       {currentTx.decoded_intent.warnings && currentTx.decoded_intent.warnings.length > 0 && (
-                        <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-2 flex items-start gap-2 text-[11px] text-amber-300">
-                          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" />
+                        <div className="rounded-none bg-[#F7F7F7] dark:bg-[#1D1D1E] border border-black/20 dark:border-[#353536] p-2 flex items-start gap-2 text-[11px] text-black dark:text-white font-mono">
+                          <AlertTriangle className="h-4 w-4 shrink-0 text-black dark:text-white mt-0.5" />
                           <div>{currentTx.decoded_intent.warnings.join(', ')}</div>
                         </div>
                       )}
@@ -462,17 +463,17 @@ export function AirGapModal({
                     <div className="flex items-center gap-2 pt-2">
                       <button
                         onClick={copyPayload}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition"
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-none bg-black text-white dark:bg-white dark:text-black text-xs font-sans font-black uppercase tracking-wider border border-black dark:border-white transition cursor-pointer"
                       >
-                        {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
-                        {copied ? 'Copied' : 'Copy Offline Transaction'}
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied ? 'COPIED' : 'COPY PAYLOAD'}
                       </button>
                       <button
                         onClick={downloadDotTxFile}
-                        className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition"
+                        className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-none bg-white dark:bg-[#0F0F10] text-black dark:text-white text-xs font-sans font-black uppercase tracking-wider border border-black dark:border-[#353536] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition cursor-pointer"
                       >
                         <Download className="h-4 w-4" />
-                        Download
+                        DOWNLOAD JSON
                       </button>
                     </div>
                   </div>
@@ -484,49 +485,51 @@ export function AirGapModal({
           {/* TAB 2: OFFLINE SIGN (AIR-GAPPED DEVICE) */}
           {activeTab === 'offline_sign' && (
             <div className="space-y-6">
-              <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 flex items-center gap-3 text-xs text-red-300">
-                <WifiOff className="h-5 w-5 text-red-400 shrink-0" />
+              <div className="rounded-none bg-[#F7F7F7] dark:bg-[#1D1D1E] border border-black/10 dark:border-[#353536] p-3 flex items-center gap-3 text-xs text-black dark:text-white font-mono">
+                <WifiOff className="h-5 w-5 text-black dark:text-white shrink-0" />
                 <div>
-                  <span className="font-bold">Air-Gap Security Notice:</span> Keep this device strictly offline (Airplane Mode recommended). Private keys never leave memory.
+                  <span className="font-bold uppercase">AIR-GAP SECURITY PROTOCOL:</span> Maintain isolated hardware offline state. Keys remain strictly in local memory.
                 </div>
               </div>
 
               {!currentTx ? (
                 <div className="space-y-4">
                   {/* Scanner / Upload Area */}
-                  <div className="rounded-2xl border-2 border-dashed border-zinc-800 p-6 text-center space-y-4 bg-zinc-900/40">
+                  <div className="rounded-none border-2 border-dashed border-black/20 dark:border-[#353536] p-6 text-center space-y-4 bg-[#F7F7F7]/60 dark:bg-[#1D1D1E]/40">
                     {cameraActive ? (
                       <div className="space-y-3">
-                        <div className="relative mx-auto w-64 h-64 rounded-xl overflow-hidden border-2 border-amber-500/60 bg-black">
+                        <div className="relative mx-auto w-64 h-64 rounded-none overflow-hidden border border-black dark:border-white bg-black">
                           <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
                           <div className="absolute inset-0 border border-dashed border-white/40 pointer-events-none" />
                         </div>
                         <button
                           onClick={stopCamera}
-                          className="px-4 py-2 rounded-lg bg-zinc-800 text-xs font-semibold text-zinc-300 hover:bg-zinc-700"
+                          className="px-4 py-2 rounded-none bg-black text-white dark:bg-white dark:text-black text-xs font-sans font-black uppercase tracking-wider border border-black dark:border-white cursor-pointer"
                         >
-                          Stop Camera
+                          STOP CAMERA
                         </button>
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <Camera className="h-10 w-10 text-amber-400 mx-auto" />
-                        <h3 className="text-sm font-semibold text-white">Scan Unsigned QR Code</h3>
-                        <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-                          Use the device camera to scan animated QR codes from your online device.
+                        <Camera className="h-10 w-10 text-black dark:text-white mx-auto" />
+                        <h3 className="text-sm font-sans font-black text-black dark:text-white uppercase tracking-wider">
+                          SCAN UNSIGNED TRANSACTION
+                        </h3>
+                        <p className="text-xs text-zinc-500 font-mono max-w-sm mx-auto">
+                          Use device optics to scan animated transaction frames from connected terminal.
                         </p>
                         <div className="flex justify-center gap-3">
                           <button
                             onClick={startCamera}
-                            className="px-4 py-2.5 rounded-xl bg-amber-500 text-black font-semibold text-xs hover:bg-amber-400 flex items-center gap-2"
+                            className="px-4 py-2.5 rounded-none bg-black text-white dark:bg-white dark:text-black font-sans font-black text-xs uppercase tracking-wider flex items-center gap-2 border border-black dark:border-white cursor-pointer"
                           >
                             <Camera className="h-4 w-4" />
-                            Start Camera Scanner
+                            START CAMERA
                           </button>
-                          <label className="cursor-pointer px-4 py-2.5 rounded-xl bg-zinc-800 text-zinc-200 font-semibold text-xs hover:bg-zinc-700 flex items-center gap-2">
+                          <label className="cursor-pointer px-4 py-2.5 rounded-none bg-white dark:bg-[#0F0F10] text-black dark:text-white font-sans font-black text-xs uppercase tracking-wider flex items-center gap-2 border border-black dark:border-[#353536] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition">
                             <Upload className="h-4 w-4" />
-                            Upload Transaction File
-                            <input type="file" accept=".dot-tx,.json" onChange={handleFileUpload} className="hidden" />
+                            UPLOAD TRANSACTION FILE
+                            <input type="file" accept=".json,.txt" onChange={handleFileUpload} className="hidden" />
                           </label>
                         </div>
                       </div>
@@ -534,13 +537,13 @@ export function AirGapModal({
 
                     {/* Progress / Scan messages */}
                     {scanStatus !== 'idle' && (
-                      <div className="pt-2 text-xs font-mono">
-                        <span className={scanStatus === 'error' ? 'text-red-400' : 'text-amber-400'}>
+                      <div className="pt-2 text-xs font-mono font-bold">
+                        <span className="text-black dark:text-white uppercase">
                           {scanMessage}
                         </span>
                         {scanProgress > 0 && scanProgress < 100 && (
-                          <div className="w-48 mx-auto mt-2 h-1 bg-zinc-800 rounded-full overflow-hidden">
-                            <div className="h-full bg-amber-500" style={{ width: `${scanProgress}%` }} />
+                          <div className="w-48 mx-auto mt-2 h-1 bg-zinc-200 dark:bg-zinc-800 rounded-none overflow-hidden">
+                            <div className="h-full bg-black dark:bg-white" style={{ width: `${scanProgress}%` }} />
                           </div>
                         )}
                       </div>
@@ -548,22 +551,24 @@ export function AirGapModal({
                   </div>
 
                   {/* Manual Paste fallback */}
-                  <div className="rounded-xl border border-zinc-800 p-4 space-y-2 bg-zinc-900/30">
-                    <label className="text-xs text-zinc-400 font-semibold">Or Paste Transaction Data:</label>
+                  <div className="rounded-none border border-black/10 dark:border-[#353536] p-4 space-y-2 bg-[#F7F7F7] dark:bg-[#1D1D1E]">
+                    <label className="text-[10px] font-mono text-zinc-600 dark:text-zinc-400 font-bold uppercase tracking-wider">
+                      OR PASTE TRANSACTION DATA:
+                    </label>
                     <textarea
                       value={scanInputText}
                       onChange={(e) => setScanInputText(e.target.value)}
                       placeholder='Paste {"version": 1, ...} or DOT1:1:3:a8f0:... frame chunk'
                       rows={3}
-                      className="w-full rounded-lg bg-black/60 border border-zinc-800 p-3 text-xs font-mono text-zinc-200 focus:outline-none focus:border-amber-500"
+                      className="w-full rounded-none bg-white dark:bg-[#0F0F10] border border-black/10 dark:border-[#353536] p-3 text-xs font-mono text-black dark:text-white focus:outline-none focus:border-black dark:focus:border-white"
                     />
                     <div className="flex justify-end">
                       <button
                         onClick={handleManualImport}
                         disabled={!scanInputText.trim()}
-                        className="px-4 py-1.5 rounded-lg bg-zinc-800 text-xs font-semibold text-zinc-200 hover:bg-zinc-700 disabled:opacity-40"
+                        className="px-4 py-2 rounded-none bg-black text-white dark:bg-white dark:text-black text-xs font-sans font-black uppercase tracking-wider hover:opacity-90 disabled:opacity-40 border border-black dark:border-white transition cursor-pointer"
                       >
-                        Process Payload
+                        PROCESS PAYLOAD
                       </button>
                     </div>
                   </div>
@@ -571,45 +576,45 @@ export function AirGapModal({
               ) : (
                 /* Intent Verification and Sign Screen */
                 <div className="space-y-5">
-                  <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-4">
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                      <ShieldCheck className="h-5 w-5 text-amber-400" />
-                      Verify Intent Before Air-Gap Signing
+                  <div className="rounded-none border border-black/10 dark:border-[#353536] bg-[#F7F7F7] dark:bg-[#1D1D1E] p-5 space-y-4">
+                    <h3 className="text-sm font-sans font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5" />
+                      VERIFY INTENT BEFORE AIR-GAP SIGNING
                     </h3>
 
                     <div className="grid grid-cols-2 gap-4 text-xs">
-                      <div className="p-3 rounded-xl bg-black/40 border border-zinc-800">
-                        <span className="text-zinc-500">Destination Address:</span>
-                        <p className="font-mono text-amber-400 font-bold mt-1 break-all">{currentTx.decoded_intent.to}</p>
+                      <div className="p-3 rounded-none bg-white dark:bg-[#0F0F10] border border-black/10 dark:border-[#353536]">
+                        <span className="text-zinc-500 font-mono uppercase text-[10px]">Destination:</span>
+                        <p className="font-mono text-black dark:text-white font-bold mt-1 break-all">{currentTx.decoded_intent.to}</p>
                       </div>
-                      <div className="p-3 rounded-xl bg-black/40 border border-zinc-800">
-                        <span className="text-zinc-500">Amount & Asset:</span>
-                        <p className="font-mono text-emerald-400 font-bold text-base mt-1">
+                      <div className="p-3 rounded-none bg-white dark:bg-[#0F0F10] border border-black/10 dark:border-[#353536]">
+                        <span className="text-zinc-500 font-mono uppercase text-[10px]">Amount & Asset:</span>
+                        <p className="font-mono text-black dark:text-white font-black text-base mt-1">
                           {currentTx.decoded_intent.amount} {currentTx.decoded_intent.symbol}
                         </p>
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-black/40 border border-zinc-800 text-xs space-y-1">
-                      <div className="text-zinc-500">Signing Account (From):</div>
-                      <div className="font-mono text-zinc-300 break-all">{currentTx.decoded_intent.from}</div>
-                      <div className="text-[11px] text-zinc-500 mt-2">Deduplication tx_id: <span className="font-mono text-zinc-400">{currentTx.tx_id}</span></div>
+                    <div className="p-3 rounded-none bg-white dark:bg-[#0F0F10] border border-black/10 dark:border-[#353536] text-xs space-y-1">
+                      <div className="text-zinc-500 font-mono uppercase text-[10px]">Signing Account (From):</div>
+                      <div className="font-mono text-zinc-700 dark:text-zinc-300 break-all">{currentTx.decoded_intent.from}</div>
+                      <div className="text-[11px] text-zinc-500 mt-2 font-mono">Deduplication ID: <span className="font-mono text-black dark:text-white font-bold">{currentTx.tx_id}</span></div>
                     </div>
 
                     <div className="flex items-center justify-between pt-2">
                       <button
                         onClick={() => setCurrentTx(null)}
-                        className="text-xs text-zinc-400 hover:text-zinc-200"
+                        className="text-xs font-sans font-black uppercase tracking-wider text-zinc-500 hover:text-black dark:hover:text-white cursor-pointer"
                       >
-                        Cancel / Reset
+                        CANCEL / RESET
                       </button>
 
                       <button
                         onClick={handleSimulatedSign}
-                        className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20"
+                        className="px-6 py-3 rounded-none bg-black text-white dark:bg-white dark:text-black font-sans font-black text-xs uppercase tracking-wider flex items-center gap-2 border border-black dark:border-white hover:opacity-90 transition cursor-pointer"
                       >
                         <ShieldCheck className="h-4 w-4" />
-                        Sign Transaction Offline
+                        SIGN TRANSACTION OFFLINE
                         <ArrowRight className="h-4 w-4" />
                       </button>
                     </div>
@@ -622,75 +627,77 @@ export function AirGapModal({
           {/* TAB 3: IMPORT SIGNED (ONLINE BROADCASTER) */}
           {activeTab === 'import_signed' && (
             <div className="space-y-6">
-              <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 flex items-center gap-3 text-xs text-emerald-300">
-                <Wifi className="h-5 w-5 text-emerald-400 shrink-0" />
+              <div className="rounded-none bg-[#F7F7F7] dark:bg-[#1D1D1E] border border-black/10 dark:border-[#353536] p-3 flex items-center gap-3 text-xs text-black dark:text-white font-mono">
+                <Wifi className="h-5 w-5 text-black dark:text-white shrink-0" />
                 <div>
-                  <span className="font-bold">Online Device Import:</span> Scan the signed QR from your offline device. The signed payload will be queued and broadcast.
+                  <span className="font-bold uppercase">CONNECTED RELAY IMPORT:</span> Scan the signed signature from your offline hardware. The transaction will be dispatched on-chain.
                 </div>
               </div>
 
               {/* Scanner Area */}
-              <div className="rounded-2xl border-2 border-dashed border-zinc-800 p-6 text-center space-y-4 bg-zinc-900/40">
+              <div className="rounded-none border-2 border-dashed border-black/20 dark:border-[#353536] p-6 text-center space-y-4 bg-[#F7F7F7]/60 dark:bg-[#1D1D1E]/40">
                 {cameraActive ? (
                   <div className="space-y-3">
-                    <div className="relative mx-auto w-64 h-64 rounded-xl overflow-hidden border-2 border-emerald-500/60 bg-black">
+                    <div className="relative mx-auto w-64 h-64 rounded-none overflow-hidden border border-black dark:border-white bg-black">
                       <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
                       <div className="absolute inset-0 border border-dashed border-white/40 pointer-events-none" />
                     </div>
                     <button
                       onClick={stopCamera}
-                      className="px-4 py-2 rounded-lg bg-zinc-800 text-xs font-semibold text-zinc-300 hover:bg-zinc-700"
+                      className="px-4 py-2 rounded-none bg-black text-white dark:bg-white dark:text-black text-xs font-sans font-black uppercase tracking-wider border border-black dark:border-white cursor-pointer"
                     >
-                      Stop Camera
+                      STOP CAMERA
                     </button>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <QrCode className="h-10 w-10 text-emerald-400 mx-auto" />
-                    <h3 className="text-sm font-semibold text-white">Scan Signed QR from Air-Gap Device</h3>
+                    <QrCode className="h-10 w-10 text-black dark:text-white mx-auto" />
+                    <h3 className="text-sm font-sans font-black text-black dark:text-white uppercase tracking-wider">
+                      SCAN SIGNED QR FROM AIR-GAP DEVICE
+                    </h3>
                     <div className="flex justify-center gap-3">
                       <button
                         onClick={startCamera}
-                        className="px-4 py-2.5 rounded-xl bg-emerald-500 text-black font-semibold text-xs hover:bg-emerald-400 flex items-center gap-2"
+                        className="px-4 py-2.5 rounded-none bg-black text-white dark:bg-white dark:text-black font-sans font-black text-xs uppercase tracking-wider flex items-center gap-2 border border-black dark:border-white cursor-pointer"
                       >
                         <Camera className="h-4 w-4" />
-                        Start Camera Scanner
+                        START CAMERA
                       </button>
-                      <label className="cursor-pointer px-4 py-2.5 rounded-xl bg-zinc-800 text-zinc-200 font-semibold text-xs hover:bg-zinc-700 flex items-center gap-2">
+                      <label className="cursor-pointer px-4 py-2.5 rounded-none bg-white dark:bg-[#0F0F10] text-black dark:text-white font-sans font-black text-xs uppercase tracking-wider flex items-center gap-2 border border-black dark:border-[#353536] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition">
                         <Upload className="h-4 w-4" />
-                        Upload Signed Transaction
-                        <input type="file" accept=".dot-tx,.json" onChange={handleFileUpload} className="hidden" />
+                        UPLOAD SIGNED TRANSACTION
+                        <input type="file" accept=".json,.txt" onChange={handleFileUpload} className="hidden" />
                       </label>
                     </div>
                   </div>
                 )}
 
                 {scanStatus !== 'idle' && (
-                  <div className="pt-2 text-xs font-mono">
-                    <span className={scanStatus === 'error' ? 'text-red-400' : 'text-emerald-400'}>
-                      {scanMessage}
-                    </span>
+                  <div className="pt-2 text-xs font-mono font-bold text-black dark:text-white uppercase">
+                    <span>{scanMessage}</span>
                   </div>
                 )}
               </div>
 
               {/* Manual Input Fallback */}
-              <div className="rounded-xl border border-zinc-800 p-4 space-y-2 bg-zinc-900/30">
-                <label className="text-xs text-zinc-400 font-semibold">Or Paste Signed Transaction:</label>
+              <div className="rounded-none border border-black/10 dark:border-[#353536] p-4 space-y-2 bg-[#F7F7F7] dark:bg-[#1D1D1E]">
+                <label className="text-[10px] font-mono text-zinc-600 dark:text-zinc-400 font-bold uppercase tracking-wider">
+                  OR PASTE SIGNED TRANSACTION:
+                </label>
                 <textarea
                   value={scanInputText}
                   onChange={(e) => setScanInputText(e.target.value)}
                   placeholder="Paste signed transaction JSON here..."
                   rows={3}
-                  className="w-full rounded-lg bg-black/60 border border-zinc-800 p-3 text-xs font-mono text-zinc-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full rounded-none bg-white dark:bg-[#0F0F10] border border-black/10 dark:border-[#353536] p-3 text-xs font-mono text-black dark:text-white focus:outline-none focus:border-black dark:focus:border-white"
                 />
                 <div className="flex justify-end">
                   <button
                     onClick={handleManualImport}
                     disabled={!scanInputText.trim()}
-                    className="px-4 py-1.5 rounded-lg bg-emerald-500 text-black font-semibold text-xs hover:bg-emerald-400 disabled:opacity-40"
+                    className="px-4 py-2 rounded-none bg-black text-white dark:bg-white dark:text-black font-sans font-black text-xs uppercase tracking-wider hover:opacity-90 disabled:opacity-40 border border-black dark:border-white transition cursor-pointer"
                   >
-                    Import & Queue Broadcast
+                    IMPORT & QUEUE BROADCAST
                   </button>
                 </div>
               </div>
@@ -699,19 +706,19 @@ export function AirGapModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-zinc-800 px-6 py-3 bg-zinc-900/50 flex items-center justify-between text-xs text-zinc-500">
+        <div className="border-t border-black/10 dark:border-[#353536] px-6 py-3 bg-[#F7F7F7] dark:bg-[#1D1D1E] flex items-center justify-between text-xs text-zinc-500 font-mono">
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Air-Gap Engine: 100% In-Browser Execution</span>
+            <span className="h-2 w-2 rounded-none bg-black dark:bg-white" />
+            <span className="font-bold text-[11px] uppercase">SOVEREIGN AIR-GAP RELAY: ZERO NETWORK EXPOSURE</span>
           </div>
           <button
             onClick={() => {
               stopCamera();
               onClose();
             }}
-            className="text-zinc-400 hover:text-white"
+            className="text-black dark:text-white uppercase font-sans font-black text-xs hover:underline cursor-pointer"
           >
-            Close
+            CLOSE
           </button>
         </div>
       </div>

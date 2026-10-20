@@ -63,24 +63,27 @@ export function ReceiveModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-sm sm:max-w-md rounded-3xl bg-[#0F1118] border border-[#232736] p-6 shadow-2xl shadow-black/90">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="relative w-full max-w-sm sm:max-w-md rounded-none bg-white dark:bg-[#0F0F10] border border-black dark:border-[#353536] p-6">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3.5 border-b border-[#1E2230] mb-4">
+        <div className="flex items-center justify-between pb-3.5 border-b border-black/10 dark:border-[#353536] mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-[#14F195]">
+            <div className="w-8 h-8 rounded-none bg-black text-white dark:bg-white dark:text-black flex items-center justify-center">
               <ArrowDownLeft size={16} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Receive Solana Assets</h3>
-              <div className="text-[10px] font-mono text-zinc-400">
-                Native SOL & SPL Tokens
+              <h3 className="text-sm font-sans font-black text-black dark:text-white uppercase tracking-wider">
+                RECEIVE SOLANA ASSETS
+              </h3>
+              <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+                NATIVE SOL & SPL TOKENS
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
+            className="p-1.5 rounded-none text-zinc-500 hover:text-black dark:hover:text-white border border-transparent hover:border-black dark:hover:border-white transition cursor-pointer"
+            aria-label="Close"
           >
             <X size={18} />
           </button>
@@ -88,8 +91,8 @@ export function ReceiveModal({
 
         {/* Asset Selector Pills */}
         <div className="mb-4">
-          <div className="text-[11px] font-mono text-zinc-400 mb-1.5">
-            Asset to Receive:
+          <div className="text-[10px] font-mono font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-widest mb-1.5">
+            ASSET TO RECEIVE:
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
             {tokens.map((t) => {
@@ -98,16 +101,13 @@ export function ReceiveModal({
                 <button
                   key={t.symbol}
                   onClick={() => setSelectedSymbol(t.symbol)}
-                  className={`py-1.5 px-2 rounded-xl border text-[11px] font-semibold flex items-center justify-center gap-1 transition cursor-pointer ${
+                  className={`py-1.5 px-2 rounded-none border text-[11px] font-mono font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
                     isSelected
-                      ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 font-bold'
-                      : 'bg-[#141722] border-[#222736] text-zinc-400 hover:text-white'
+                      ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
+                      : 'bg-[#F7F7F7] dark:bg-[#1D1D1E] border-black/10 dark:border-[#353536] text-zinc-700 dark:text-zinc-300 hover:border-black dark:hover:border-white'
                   }`}
                 >
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: t.color || '#14F195' }}
-                  />
+                  <div className="w-1.5 h-1.5 rounded-none bg-black dark:bg-white" />
                   <span>{t.symbol}</span>
                 </button>
               );
@@ -117,42 +117,42 @@ export function ReceiveModal({
 
         {/* QR Code Container */}
         <div className="flex flex-col items-center justify-center my-3">
-          <div className="p-3.5 rounded-2xl bg-white border-2 border-white shadow-xl shadow-emerald-500/5">
+          <div className="p-4 rounded-none bg-white border border-black dark:border-[#353536]">
             <svg
               viewBox={`0 0 ${size} ${size}`}
               className="w-40 h-40 sm:w-44 sm:h-44"
-              fill="#0A0A0C"
+              fill="#000000"
             >
               <rect width="100%" height="100%" fill="#FFFFFF" />
-              <path d={path} fill="#0A0A0C" />
+              <path d={path} fill="#000000" />
             </svg>
           </div>
 
-          <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-emerald-400 font-mono">
+          <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-black dark:text-white font-mono uppercase font-bold">
             <ShieldCheck size={13} />
-            <span>Solana Network Verified</span>
+            <span>SOLANA ON-CHAIN VERIFIED</span>
           </div>
         </div>
 
         {/* Formatted Address Box */}
-        <div className="p-3 rounded-2xl bg-[#090A0E] border border-[#1E2230] mb-3">
-          <div className="flex items-center justify-between text-[10px] text-zinc-500 uppercase tracking-wider mb-1">
-            <span>Solana Receiving Address</span>
-            <span className="font-mono text-emerald-400">Solana Mainnet</span>
+        <div className="p-3 rounded-none bg-[#F7F7F7] dark:bg-[#1D1D1E] border border-black/10 dark:border-[#353536] mb-3">
+          <div className="flex items-center justify-between text-[10px] text-zinc-500 uppercase tracking-wider mb-1 font-mono font-bold">
+            <span>RECEIVING ADDRESS</span>
+            <span className="text-black dark:text-white">SOLANA MAINNET</span>
           </div>
-          <div className="font-mono text-xs text-zinc-200 break-all select-all leading-relaxed">
+          <div className="font-mono text-xs text-black dark:text-white break-all select-all leading-relaxed font-bold">
             {solAddress}
           </div>
         </div>
 
         {/* Notice for SPL tokens */}
         {!activeToken?.isNative && (
-          <div className="mb-3.5 px-3 py-2 rounded-xl bg-emerald-950/20 border border-emerald-800/30 flex items-center justify-between text-[11px] text-zinc-300">
+          <div className="mb-3.5 px-3 py-2 rounded-none bg-[#F7F7F7] dark:bg-[#1D1D1E] border border-black/10 dark:border-[#353536] flex items-center justify-between text-[11px] text-zinc-700 dark:text-zinc-300 font-mono">
             <span className="flex items-center gap-1.5">
-              <Coins size={13} className="text-[#14F195]" />
-              <span>Sends directly to your {activeToken?.symbol} token account</span>
+              <Coins size={13} className="text-black dark:text-white" />
+              <span>Direct dispatch to {activeToken?.symbol} token account</span>
             </span>
-            <span className="font-mono text-zinc-500">Same Address</span>
+            <span className="font-bold text-black dark:text-white">SAME ADDRESS</span>
           </div>
         )}
 
@@ -162,9 +162,9 @@ export function ReceiveModal({
             href={`https://solscan.io/account/${solAddress}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-mono text-[#14F195] hover:underline"
+            className="inline-flex items-center gap-1.5 text-xs font-mono text-black dark:text-white hover:underline uppercase font-bold"
           >
-            <span>View Account on Solscan Explorer</span>
+            <span>VIEW ON SOLSCAN EXPLORER</span>
             <ExternalLink size={13} />
           </a>
         </div>
@@ -173,27 +173,27 @@ export function ReceiveModal({
         <div className="grid grid-cols-2 gap-2.5">
           <button
             onClick={handleCopy}
-            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-[#1F2433] hover:bg-zinc-700 text-zinc-200 transition border border-zinc-700/50 cursor-pointer"
+            className="flex items-center justify-center gap-2 py-3 px-4 rounded-none text-xs font-sans font-black uppercase tracking-wider bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition border border-black dark:border-white cursor-pointer"
           >
             {copied ? (
               <>
-                <Check size={14} className="text-emerald-400" />
-                <span className="text-emerald-400">Copied!</span>
+                <Check size={14} />
+                <span>COPIED!</span>
               </>
             ) : (
               <>
                 <Copy size={14} />
-                <span>Copy Address</span>
+                <span>COPY ADDRESS</span>
               </>
             )}
           </button>
 
           <button
             onClick={handleDownloadSvg}
-            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-emerald-950/40 hover:bg-emerald-900/40 text-emerald-400 border border-emerald-800/50 transition cursor-pointer"
+            className="flex items-center justify-center gap-2 py-3 px-4 rounded-none text-xs font-sans font-black uppercase tracking-wider bg-white dark:bg-[#0F0F10] text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black border border-black dark:border-[#353536] transition cursor-pointer"
           >
             <Download size={14} />
-            <span>Save SVG QR</span>
+            <span>SAVE SVG QR</span>
           </button>
         </div>
       </div>

@@ -14,14 +14,14 @@ export interface ThemeContextType {
 const THEME_STORAGE_KEY = 'dot_theme';
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'dark',
+  theme: 'light',
   toggleTheme: () => {},
   setTheme: () => {},
-  isDark: true,
+  isDark: false,
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark');
+  const [theme, setThemeState] = useState<Theme>('light');
   const [mounted, setMounted] = useState(false);
 
   const applyTheme = (t: Theme) => {
@@ -52,17 +52,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
     try {
       const saved = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-      if (saved === 'light' || saved === 'dark') {
-        setThemeState(saved);
-        applyTheme(saved);
+      if (saved === 'dark') {
+        setThemeState('dark');
+        applyTheme('dark');
       } else {
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const initial: Theme = prefersDark ? 'dark' : 'light';
-        setThemeState(initial);
-        applyTheme(initial);
+        setThemeState('light');
+        applyTheme('light');
       }
     } catch {
-      applyTheme('dark');
+      applyTheme('light');
     }
   }, []);
 

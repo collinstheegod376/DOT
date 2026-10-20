@@ -24,21 +24,21 @@ export function PortfolioAssets({
   const displayedTokens = showAll ? tokens : tokens.slice(0, 4);
 
   return (
-    <div className="rounded-none p-6 sm:p-7 transition-colors duration-150 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800">
+    <div className="rounded-none p-6 sm:p-7 transition-colors duration-150 bg-white dark:bg-[#0F0F10] border border-black dark:border-[#353536]">
       {/* Header: "MY ASSETS" with uppercase DM Sans tracking */}
-      <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/10 dark:border-[#353536]">
         <div className="flex items-center gap-3">
           <h2 className="text-sm font-sans font-black tracking-widest text-black dark:text-white uppercase">
             MY ASSETS
           </h2>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-none border border-zinc-200 dark:border-zinc-800 text-zinc-500 uppercase tracking-wider">
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded-none border border-black dark:border-[#353536] text-black dark:text-white uppercase tracking-wider font-bold">
             {tokens.length} ASSETS
           </span>
         </div>
 
         <button
           onClick={() => setShowAll(!showAll)}
-          className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500 hover:text-black dark:hover:text-white flex items-center gap-1 transition-colors cursor-pointer select-none"
+          className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white flex items-center gap-1 transition-colors cursor-pointer select-none"
         >
           <span>{showAll ? 'LESS' : 'VIEW ALL'}</span>
           <ChevronRight
@@ -62,7 +62,7 @@ export function PortfolioAssets({
             <div
               key={token.symbol}
               onClick={() => onSelectToken?.(token)}
-              className="group p-4 rounded-none bg-zinc-50/50 dark:bg-zinc-950/40 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors duration-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer"
+              className="group p-4 rounded-none bg-[#F7F7F7]/60 dark:bg-[#1D1D1E]/40 hover:bg-[#ECECEC] dark:hover:bg-[#262628] border border-black/10 dark:border-[#353536] transition-colors duration-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer"
             >
               {/* Left: Authentic Coin Vector Logo + Token Name & Symbol */}
               <div className="flex items-center gap-3 min-w-[180px]">
@@ -75,12 +75,12 @@ export function PortfolioAssets({
                       {token.name}
                     </span>
                     {token.isNative && (
-                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-none border border-zinc-300 dark:border-zinc-700 text-zinc-500 uppercase">
+                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded-none border border-black dark:border-[#353536] text-black dark:text-white uppercase font-bold">
                         NATIVE
                       </span>
                     )}
                   </div>
-                  <div className="text-xs font-mono text-zinc-400 dark:text-zinc-500 uppercase">
+                  <div className="text-xs font-mono text-zinc-500 uppercase">
                     {token.symbol}
                   </div>
                 </div>
@@ -89,7 +89,7 @@ export function PortfolioAssets({
               {/* Middle: Sharp Rectangular Allocation Bar */}
               <div className="flex-1 max-w-xs px-0 sm:px-4">
                 <div className="flex items-center justify-between text-[11px] font-mono mb-1 text-zinc-500">
-                  <span className="uppercase text-[10px]">ALLOCATION</span>
+                  <span className="uppercase text-[10px] font-bold">ALLOCATION</span>
                   <span className="font-semibold text-black dark:text-white">
                     {allocationPercent.toFixed(1)}%
                   </span>
@@ -124,7 +124,7 @@ export function PortfolioAssets({
                           e.stopPropagation();
                           onSendToken(token);
                         }}
-                        className="p-1.5 rounded-none border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-white hover:bg-black dark:hover:text-black dark:hover:bg-white transition-colors cursor-pointer"
+                        className="p-1.5 rounded-none border border-black/20 dark:border-[#353536] text-zinc-700 dark:text-zinc-300 hover:text-white hover:bg-black dark:hover:text-black dark:hover:bg-white transition-colors cursor-pointer"
                         title={`Send ${token.symbol}`}
                       >
                         <ArrowUpRight size={14} />
@@ -136,7 +136,7 @@ export function PortfolioAssets({
                           e.stopPropagation();
                           onReceiveToken(token);
                         }}
-                        className="p-1.5 rounded-none border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-white hover:bg-black dark:hover:text-black dark:hover:bg-white transition-colors cursor-pointer"
+                        className="p-1.5 rounded-none border border-black/20 dark:border-[#353536] text-zinc-700 dark:text-zinc-300 hover:text-white hover:bg-black dark:hover:text-black dark:hover:bg-white transition-colors cursor-pointer"
                         title={`Receive ${token.symbol}`}
                       >
                         <ArrowDownLeft size={14} />
@@ -152,10 +152,10 @@ export function PortfolioAssets({
 
       {/* Fresh Vault Clean Indicator */}
       {totalFiatBalance === 0 && (
-        <div className="mt-4 pt-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-[11px] font-mono text-zinc-500">
-          <span className="flex items-center gap-1.5 uppercase">
-            <span className="w-1.5 h-1.5 rounded-none bg-emerald-500" />
-            <span>Vault Ready — Deposit funds to activate live tracking</span>
+        <div className="mt-4 pt-3 border-t border-black/10 dark:border-[#353536] flex items-center justify-between text-[11px] font-mono text-zinc-500">
+          <span className="flex items-center gap-1.5 uppercase font-mono">
+            <span className="w-1.5 h-1.5 rounded-none bg-black dark:bg-white" />
+            <span>Vault Ready — Deposit assets to activate tracking</span>
           </span>
           <span className="text-black dark:text-white font-bold uppercase">Ready</span>
         </div>

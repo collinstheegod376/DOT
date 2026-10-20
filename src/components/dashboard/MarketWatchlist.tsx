@@ -17,9 +17,9 @@ export function MarketWatchlist({ onSelectToken }: MarketWatchlistProps) {
   const watchlistTokens = tokens.slice(0, 6);
 
   return (
-    <div className="rounded-none p-6 sm:p-7 transition-colors duration-150 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800">
+    <div className="rounded-none p-6 sm:p-7 transition-colors duration-150 bg-white dark:bg-[#0F0F10] border border-black dark:border-[#353536]">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/10 dark:border-[#353536]">
         <div className="flex items-center gap-2">
           <Activity size={16} className="text-black dark:text-white" />
           <h2 className="text-sm font-sans font-black tracking-widest text-black dark:text-white uppercase">
@@ -27,8 +27,8 @@ export function MarketWatchlist({ onSelectToken }: MarketWatchlistProps) {
           </h2>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
-          <span className="w-1.5 h-1.5 rounded-none bg-emerald-500" />
+        <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-500 uppercase tracking-wider font-bold">
+          <span className="w-1.5 h-1.5 rounded-none bg-black dark:bg-white" />
           <span>SOLANA LIVE</span>
         </div>
       </div>
@@ -53,7 +53,7 @@ export function MarketWatchlist({ onSelectToken }: MarketWatchlistProps) {
             <div
               key={token.symbol}
               onClick={() => onSelectToken?.(token)}
-              className="group p-3.5 rounded-none bg-zinc-50/50 dark:bg-zinc-950/40 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors duration-100 flex items-center justify-between gap-3 cursor-pointer"
+              className="group p-3.5 rounded-none bg-[#F7F7F7]/60 dark:bg-[#1D1D1E]/40 hover:bg-[#ECECEC] dark:hover:bg-[#262628] border border-black/10 dark:border-[#353536] transition-colors duration-100 flex items-center justify-between gap-3 cursor-pointer"
             >
               {/* Left: Authentic Token Vector Logo & Names */}
               <div className="flex items-center gap-3">
@@ -64,7 +64,7 @@ export function MarketWatchlist({ onSelectToken }: MarketWatchlistProps) {
                   <div className="font-sans font-bold text-xs sm:text-sm text-black dark:text-white">
                     {token.name}
                   </div>
-                  <div className="text-[11px] font-mono text-zinc-400 uppercase">
+                  <div className="text-[11px] font-mono text-zinc-500 uppercase">
                     {token.symbol}
                   </div>
                 </div>
@@ -80,9 +80,10 @@ export function MarketWatchlist({ onSelectToken }: MarketWatchlistProps) {
                         : 'M 2 6 Q 15 8, 30 16 T 58 20'
                     }
                     fill="none"
-                    stroke={isPositive ? '#10B981' : '#EF4444'}
+                    stroke="currentColor"
                     strokeWidth="1.5"
                     strokeLinecap="square"
+                    className="text-black dark:text-white opacity-60"
                   />
                 </svg>
               </div>
@@ -95,10 +96,10 @@ export function MarketWatchlist({ onSelectToken }: MarketWatchlistProps) {
 
                 <div className="flex items-center justify-end gap-1 mt-0.5">
                   <span
-                    className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded-none border ${
+                    className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-none border ${
                       isPositive
-                        ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10'
-                        : 'border-red-500/30 text-red-600 dark:text-red-400 bg-red-500/10'
+                        ? 'border-black dark:border-white text-black dark:text-white bg-black/5 dark:bg-white/10'
+                        : 'border-zinc-500 text-zinc-700 dark:text-zinc-300 bg-zinc-200/50 dark:bg-zinc-800/50'
                     }`}
                   >
                     {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}

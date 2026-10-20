@@ -19,7 +19,7 @@ export function UnlockModal() {
     try {
       const ok = await unlockWithPasskey();
       if (!ok) {
-        setError('Passkey verification failed or was cancelled. Try password fallback.');
+        setError('Passkey verification failed or was cancelled. Try security password fallback.');
       }
     } catch {
       setError('Biometric authentication failed.');
@@ -36,26 +36,28 @@ export function UnlockModal() {
     try {
       const ok = await unlockWithPassword(password);
       if (!ok) {
-        setError('Incorrect password or unable to decrypt envelope.');
+        setError('Incorrect password or unable to decrypt Offline Vault.');
       }
     } catch {
-      setError('Failed to decrypt vault.');
+      setError('Failed to unlock Offline Vault.');
     } finally {
       setIsUnlockingPassword(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md rounded-3xl bg-[#0F0F14] border border-[#1F1F24] p-6 md:p-8 shadow-2xl shadow-cyan-500/10 text-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md rounded-none bg-white dark:bg-[#16161E] border border-black dark:border-[#353536] p-6 md:p-8 shadow-none text-center">
         {/* Emblem */}
-        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-cyan-950 via-[#12121E] to-emerald-950 border border-cyan-500/30 flex items-center justify-center text-cyan-400 glow-cyan">
-          <Lock size={28} />
+        <div className="w-14 h-14 mx-auto mb-4 rounded-none border border-black dark:border-white bg-black dark:bg-white text-white dark:text-black flex items-center justify-center">
+          <Lock size={24} />
         </div>
 
-        <h2 className="text-xl font-bold text-white mb-1">Vault Locked</h2>
-        <p className="text-xs text-zinc-400 mb-6 max-w-xs mx-auto">
-          Cryptographic keys are purged from session memory. Authenticate with your Passkey or Password.
+        <h2 className="text-2xl font-sans font-[900] tracking-tighter uppercase text-black dark:text-white mb-2">
+          Offline Vault Locked
+        </h2>
+        <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-6 max-w-xs mx-auto leading-relaxed">
+          Cryptographic keys are purged from session memory. Authenticate with your Passkey or Security Password.
         </p>
 
         {/* Primary Biometric Unlock */}
@@ -63,7 +65,7 @@ export function UnlockModal() {
           <button
             onClick={handlePasskeyUnlock}
             disabled={isUnlockingPasskey}
-            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl text-xs font-semibold bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black shadow-lg shadow-cyan-500/20 transition cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 bg-black text-white dark:bg-white dark:text-black border border-black dark:border-white h-12 uppercase font-sans font-bold text-xs tracking-wider rounded-none hover:opacity-85 transition cursor-pointer disabled:opacity-40"
           >
             {isUnlockingPasskey ? (
               <>
@@ -78,31 +80,38 @@ export function UnlockModal() {
             )}
           </button>
 
-          <div className="flex items-center gap-3 text-xs text-zinc-500">
-            <div className="flex-1 h-px bg-zinc-800" />
-            <span className="font-mono text-[10px] uppercase">OR FALLBACK</span>
-            <div className="flex-1 h-px bg-zinc-800" />
+          <div className="flex items-center gap-3 my-4 text-xs text-zinc-400">
+            <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
+            <span className="font-sans font-bold text-[10px] tracking-widest uppercase">
+              OR FALLBACK
+            </span>
+            <div className="flex-1 h-px bg-zinc-200 dark:bg-zinc-800" />
           </div>
 
           {/* Fallback Password Input */}
           <form onSubmit={handlePasswordUnlock} className="space-y-3">
-            <input
-              type="password"
-              placeholder="Enter security password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl bg-[#14141C] border border-[#272732] text-zinc-200 text-sm focus:outline-none focus:border-cyan-400 font-mono"
-            />
+            <div className="text-left">
+              <label className="block text-xs uppercase font-sans font-bold tracking-wider text-black dark:text-white mb-2">
+                Security Password
+              </label>
+              <input
+                type="password"
+                placeholder="Enter security password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 h-12 rounded-none bg-transparent border border-black dark:border-white text-black dark:text-white font-mono text-xs focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+              />
+            </div>
 
             <button
               type="submit"
               disabled={isUnlockingPassword || !password}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-[#1A1A26] hover:bg-[#222232] text-zinc-200 border border-[#272732] transition cursor-pointer disabled:opacity-40"
+              className="w-full flex items-center justify-center gap-2 bg-transparent text-black dark:text-white border border-black dark:border-white h-12 uppercase font-sans font-bold text-xs tracking-wider rounded-none hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition cursor-pointer disabled:opacity-40"
             >
               {isUnlockingPassword ? (
                 <>
                   <RefreshCw size={14} className="animate-spin" />
-                  <span>Unlocking Vault...</span>
+                  <span>Unlocking Offline Vault...</span>
                 </>
               ) : (
                 <>
@@ -115,17 +124,17 @@ export function UnlockModal() {
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-red-950/40 border border-red-800/50 flex items-center gap-2 text-xs text-red-300 text-left mb-4">
-            <AlertTriangle size={16} className="text-red-400 shrink-0" />
+          <div className="p-3.5 rounded-none bg-red-50 dark:bg-red-950/20 border border-red-600 flex items-center gap-2 text-xs font-mono text-red-600 dark:text-red-400 text-left mb-4">
+            <AlertTriangle size={16} className="text-red-600 dark:text-red-400 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Reset option */}
-        <div className="pt-2 border-t border-[#1F1F24]">
+        <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
           <button
             onClick={resetVault}
-            className="text-[11px] font-mono text-zinc-500 hover:text-red-400 transition cursor-pointer"
+            className="text-xs font-sans font-bold uppercase tracking-wider text-zinc-500 hover:text-red-600 dark:hover:text-red-400 transition cursor-pointer"
           >
             Forgot Password? Reset and Restore from Backup
           </button>

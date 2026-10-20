@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0B0B0F',
+  themeColor: '#FFFFFF',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -46,8 +46,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${ibmPlexMono.variable} dark h-full`} suppressHydrationWarning>
-      <body className="crypto-grid min-h-full flex flex-col antialiased selection:bg-[#14F195]/20 selection:text-[#14F195]">
+    <html lang="en" className={`${dmSans.variable} ${ibmPlexMono.variable} light h-full`} suppressHydrationWarning>
+      <body className="min-h-full flex flex-col antialiased bg-[#FFFFFF] text-[#222222] font-sans">
         <ThemeProvider>
           <OfflineProvider>
             {children}
