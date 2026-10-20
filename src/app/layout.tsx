@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   description: 'Dot holds no keys and runs no servers. Your funds, your device, your call.',
   manifest: '/manifest.json',
   icons: {
-    icon: '/icon.svg',
-    apple: '/icon.svg',
+    icon: '/pwa-icon.png',
+    apple: '/pwa-icon.png',
   },
   appleWebApp: {
     capable: true,
