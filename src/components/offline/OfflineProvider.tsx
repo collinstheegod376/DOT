@@ -54,18 +54,18 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
 
       {/* Online Sync Auto-Prompt */}
       {showSyncPrompt && pendingTxs.length > 0 && (
-        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-2xl bg-zinc-950 border border-amber-500/40 p-4 text-xs text-zinc-100 shadow-2xl backdrop-blur-md max-w-sm">
-          <div className="rounded-xl bg-amber-500/10 p-2 text-amber-400 border border-amber-500/20 shrink-0">
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-none bg-white border border-black p-4 text-xs text-black shadow-2xl max-w-sm font-sans">
+          <div className="rounded-none bg-[#F7F7F7] p-2 text-black border border-black shrink-0">
             <Wifi className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <h4 className="font-bold text-white flex items-center gap-1.5">
-              Connection Restored
-              <span className="rounded-full bg-amber-500/20 text-amber-300 px-1.5 py-0.2 text-[10px] font-mono">
-                {pendingTxs.length} Queued
+            <h4 className="font-sans font-black text-black text-xs uppercase flex items-center gap-1.5 tracking-wider">
+              CONNECTION RESTORED
+              <span className="rounded-none bg-black text-white px-1.5 py-0.5 text-[10px] font-mono">
+                {pendingTxs.length} QUEUED
               </span>
             </h4>
-            <p className="text-[11px] text-zinc-400 mt-0.5">
+            <p className="text-[11px] text-zinc-600 font-mono mt-0.5">
               You have {pendingTxs.length} offline signed transaction{pendingTxs.length > 1 ? 's' : ''} ready to broadcast.
             </p>
             <div className="mt-2.5 flex items-center gap-2">
@@ -74,14 +74,14 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
                   window.dispatchEvent(new CustomEvent('dot:open-queue'));
                   setShowSyncPrompt(false);
                 }}
-                className="rounded-lg bg-amber-500 px-3 py-1 font-semibold text-black hover:bg-amber-400 text-xs flex items-center gap-1"
+                className="rounded-none bg-black px-3 py-1.5 font-sans font-black text-white hover:opacity-90 text-xs flex items-center gap-1 border border-black uppercase tracking-wider cursor-pointer transition"
               >
-                Review & Broadcast
+                <span>Review & Broadcast</span>
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={() => setShowSyncPrompt(false)}
-                className="text-zinc-500 hover:text-zinc-300 text-xs"
+                className="text-zinc-500 hover:text-black text-xs font-mono uppercase cursor-pointer transition"
               >
                 Dismiss
               </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WalletProvider, useWallet } from '@/context/WalletContext';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { ExecutiveNav } from '@/components/dashboard/ExecutiveNav';
@@ -13,7 +13,7 @@ import { SendModal } from '@/components/dashboard/SendModal';
 import { ReceiveModal } from '@/components/dashboard/ReceiveModal';
 import { SettingsBackupModal } from '@/components/dashboard/SettingsBackupModal';
 import { UnlockModal } from '@/components/dashboard/UnlockModal';
-import { AirGapModal } from '@/components/airgap/AirGapModal';
+import { AirGapModal, AirGapMode } from '@/components/airgap/AirGapModal';
 import { QrModal } from '@/components/common/QrModal';
 import { SupportedChainId } from '@/types/wallet';
 import {
@@ -34,8 +34,27 @@ function WalletAppContent() {
   const [sendModalOpen, setSendModalOpen] = useState(false);
   const [receiveModalOpen, setReceiveModalOpen] = useState(false);
   const [airGapModalOpen, setAirGapModalOpen] = useState(false);
+  const [airGapMode, setAirGapMode] = useState<AirGapMode>('export_unsigned');
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [activeAssetSymbol, setActiveAssetSymbol] = useState<string>('SOL');
+
+  // Listen to dot:open-queue to open AirGapModal on the Queue view
+  useEffect(() => {
+    const handleOpenQueue = () => {
+      setAirGapMode('queue');
+      setAirGapModalOpen(true);
+    };
+
+    window.addEventListener('dot:open-queue', handleOpenQueue);
+    return () => {
+      window.removeEventListener('dot:open-queue', handleOpenQueue);
+    };
+  }, []);
+
+  const handleOpenAirGap = (mode: AirGapMode = 'export_unsigned') => {
+    setAirGapMode(mode);
+    setAirGapModalOpen(true);
+  };
 
   // QR Modal State
   const [qrModalData, setQrModalData] = useState<{
@@ -93,7 +112,7 @@ function WalletAppContent() {
             <HeroPortfolio
               onSend={handleOpenSend}
               onReceive={handleOpenReceive}
-              onOpenAirGap={() => setAirGapModalOpen(true)}
+              onOpenAirGap={() => handleOpenAirGap('export_unsigned')}
               onViewQr={handleViewQr}
             />
 
@@ -112,7 +131,7 @@ function WalletAppContent() {
           <div className="lg:col-span-5 xl:col-span-4 space-y-6">
             {/* Quick Action Transfer Widget (Send / Receive / Air-Gap) */}
             <QuickActionCard
-              onOpenAirGap={() => setAirGapModalOpen(true)}
+              onOpenAirGap={() => handleOpenAirGap('export_unsigned')}
               onViewQr={handleViewQr}
               onSendComplete={() => refreshBalances()}
             />
@@ -158,7 +177,7 @@ function WalletAppContent() {
 
           {/* Air-Gap / Offline */}
           <button
-            onClick={() => setAirGapModalOpen(true)}
+            onClick={() => handleOpenAirGap('queue')}
             className="h-12 flex flex-col items-center justify-center rounded-none bg-[#F7F7F7] hover:bg-black hover:text-white text-black border border-black/10 font-sans font-black text-[11px] uppercase tracking-wider transition active:opacity-80 cursor-pointer"
           >
             <Radio size={16} />
@@ -183,6 +202,7 @@ function WalletAppContent() {
       <AirGapModal
         isOpen={airGapModalOpen}
         onClose={() => setAirGapModalOpen(false)}
+        mode={airGapMode}
       />
 
       <SettingsBackupModal

@@ -9,6 +9,9 @@
  */
 
 import { DotTx, DotTxStatus, isDotTxExpired } from './dot-tx';
+import { Connection, Transaction, PublicKey } from '@solana/web3.js';
+import { base58 } from '@scure/base';
+import { buildAndBroadcastSolanaTransfer, resolveSolanaRpcUrl } from '../chains/sol-tx';
 
 const DB_NAME = 'dot_offline_vault';
 const DB_VERSION = 1;
@@ -324,3 +327,143 @@ export function registerOnlineSync(onPrompt: OnlinePromptHandler): () => void {
     window.removeEventListener('online', handleOnline);
   };
 }
+
+/**
+ * Broadcasts a queued offline transaction to the live network.
+ * 
+ * For Solana (`tx.chain === 'sol'`):
+ * - Resolves the cluster RPC endpoint based on `activeNetwork`.
+ *   (Devnet: 'https://api.devnet.solana.com', Testnet: 'https://api.testnet.solana.com', Mainnet: 'https://api.mainnet-beta.solana.com')
+ * - If `tx.unsigned_payload` contains a serialized transaction, broadcasts via `Connection.sendRawTransaction`.
+ * - If raw broadcast fails or if the payload is an intent/instruction requiring reconstruction,
+ *   reconstructs and broadcasts via `buildAndBroadcastSolanaTransfer`.
+ * - Updates `tx.status` to `'broadcast'` and sets `broadcast_hash` to the real on-chain transaction signature.
+ */
+export async function broadcastQueuedTx(
+  tx: DotTx,
+  activeNetwork: string,
+  privateKey?: string
+): Promise<{ signature: string; feeSol: string }> {
+  if (isDotTxExpired(tx)) {
+    await updateTxStatus(tx.tx_id, 'expired', { error: 'Blockhash expired before broadcast' });
+    throw new Error('Transaction expired before broadcast. Solana blockhash validity window exceeded.');
+  }
+
+  await updateTxStatus(tx.tx_id, 'broadcasting');
+
+  try {
+    let signature = '';
+    let feeSol = '0.000005';
+
+    if (tx.chain === 'sol') {
+      const rpcUrl = resolveSolanaRpcUrl(activeNetwork);
+      const connection = new Connection(rpcUrl, 'confirmed');
+
+      let rawTxBytes: Uint8Array | null = null;
+      const payloadStr = tx.unsigned_payload?.trim() || '';
+
+      // Check if unsigned_payload can be decoded as binary (hex, base64, or base58)
+      if (payloadStr) {
+        if (/^[0-9a-fA-F]+$/.test(payloadStr) && payloadStr.length % 2 === 0) {
+          try {
+            const buf = new Uint8Array(payloadStr.length / 2);
+            for (let i = 0; i < payloadStr.length; i += 2) {
+              buf[i / 2] = parseInt(payloadStr.substring(i, i + 2), 16);
+            }
+            rawTxBytes = buf;
+          } catch {}
+        } else {
+          try {
+            // Try base64
+            const binStr = atob(payloadStr);
+            const buf = new Uint8Array(binStr.length);
+            for (let i = 0; i < binStr.length; i++) {
+              buf[i] = binStr.charCodeAt(i);
+            }
+            rawTxBytes = buf;
+          } catch {
+            try {
+              // Try base58
+              rawTxBytes = base58.decode(payloadStr);
+            } catch {}
+          }
+        }
+      }
+
+      let sentViaRaw = false;
+
+      // 1. If valid serialized transaction bytes exist, attempt broadcast via Connection.sendRawTransaction
+      if (rawTxBytes && rawTxBytes.length > 50) {
+        try {
+          let txBuffer: Uint8Array = rawTxBytes;
+          try {
+            const parsedTx = Transaction.from(rawTxBytes);
+            if (tx.signatures && tx.signatures.length > 0) {
+              for (const sig of tx.signatures) {
+                try {
+                  const sigBytes = base58.decode(sig.signature);
+                  const pubkey = new PublicKey(sig.signer);
+                  parsedTx.addSignature(pubkey, Buffer.from(sigBytes));
+                } catch {}
+              }
+              const serialized = await parsedTx.serialize();
+              txBuffer = serialized;
+            }
+          } catch {
+            // Buffer may be versioned transaction or already serialized
+          }
+
+          signature = await connection.sendRawTransaction(txBuffer, {
+            skipPreflight: false,
+            preflightCommitment: 'confirmed',
+          });
+
+          const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+          if (confirmation?.value?.err) {
+            throw new Error(`On-chain transaction execution error: ${JSON.stringify(confirmation.value.err)}`);
+          }
+          sentViaRaw = true;
+        } catch (rawErr) {
+          console.warn('[DOT Queue] Raw transaction dispatch error, falling back to reconstruction:', rawErr);
+        }
+      }
+
+      // 2. Fallback: reconstruct using buildAndBroadcastSolanaTransfer
+      if (!sentViaRaw) {
+        const amountNum = parseFloat(tx.decoded_intent.amount);
+        if (isNaN(amountNum) || amountNum <= 0) {
+          throw new Error(`Invalid transfer amount: ${tx.decoded_intent.amount}`);
+        }
+
+        if (!privateKey) {
+          throw new Error(
+            'Broadcasting this queued transaction requires your wallet key to reconstruct with a fresh blockhash. Please unlock your wallet.'
+          );
+        }
+
+        const result = await buildAndBroadcastSolanaTransfer({
+          senderAddress: tx.decoded_intent.from,
+          recipientAddress: tx.decoded_intent.to,
+          amountSol: amountNum,
+          privateKeyHexOrBytes: privateKey,
+          activeNetwork,
+        });
+
+        signature = result.signature;
+        feeSol = result.feeSol;
+      }
+    } else {
+      throw new Error(`On-chain broadcast for ${tx.chain.toUpperCase()} is not supported on this cluster.`);
+    }
+
+    // Update status to 'broadcast' and set broadcast_hash
+    await updateTxStatus(tx.tx_id, 'broadcast', { broadcast_hash: signature });
+
+    return { signature, feeSol };
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    await updateTxStatus(tx.tx_id, 'failed', { error: errorMsg });
+    throw err;
+  }
+}
+

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   AddressInfo,
   ChainBalance,
@@ -43,6 +43,8 @@ import {
 import { STORAGE_KEYS } from '@/lib/constants';
 import { fetchLiveChainBalances, fetchSolanaTransactions } from '@/lib/rpc/balance';
 import { buildAndBroadcastSolanaTransfer } from '@/lib/chains/sol-tx';
+import { createDotTx } from '@/lib/offline/dot-tx';
+import { enqueueTx, getAllTxs, updateTxStatus } from '@/lib/offline/queue';
 
 interface WalletContextType {
   isInitialized: boolean;
@@ -87,8 +89,12 @@ interface WalletContextType {
   unlockWithPassword: (password: string) => Promise<boolean>;
   resetVault: () => Promise<void>;
   sendTransaction: (
-    tx: Omit<TransactionRecord, 'id' | 'timestamp' | 'status' | 'hash'> & { hash?: string }
+    tx: Omit<TransactionRecord, 'id' | 'timestamp' | 'status' | 'hash'> & {
+      hash?: string;
+      status?: TransactionStatus;
+    }
   ) => Promise<TransactionRecord>;
+  broadcastQueuedTransactions: () => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
@@ -588,13 +594,17 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const sendTransaction = useCallback(
     async (
-      txInput: Omit<TransactionRecord, 'id' | 'timestamp' | 'status' | 'hash'> & { hash?: string }
+      txInput: Omit<TransactionRecord, 'id' | 'timestamp' | 'status' | 'hash'> & {
+        hash?: string;
+        status?: TransactionStatus;
+      }
     ): Promise<TransactionRecord> => {
-      const effectiveOnline = isOnline && !isAirGapSimulated;
+      const isExplicitOffline = txInput.status === 'queued_offline';
+      const effectiveOnline = !isExplicitOffline && isOnline && !isAirGapSimulated;
 
       let finalHash = txInput.hash;
       let finalFee = txInput.fee || '0.000005 SOL';
-      let status: TransactionStatus = 'queued_offline';
+      let status: TransactionStatus = txInput.status || 'queued_offline';
 
       if (effectiveOnline) {
         if (!privateKeys?.solana) {
@@ -639,6 +649,24 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
           finalHash = Array.from(randomBytes)
             .map((b) => b.toString(16).padStart(2, '0'))
             .join('');
+        }
+
+        // Also enqueue into DotTx queue store (IndexedDB)
+        try {
+          const dotTx = createDotTx({
+            chain: 'sol',
+            network_id: activeNetwork,
+            unsigned_payload: finalHash,
+            decoded_intent: {
+              to: txInput.to || '',
+              from: txInput.from || addresses.solana?.address || '',
+              amount: `${txInput.amount}`,
+              symbol: 'SOL',
+            },
+          });
+          enqueueTx(dotTx).catch((e) => console.warn('[WalletContext] Failed to enqueue to DotTx queue:', e));
+        } catch (e) {
+          console.warn('[WalletContext] Failed to create DotTx:', e);
         }
       }
 
@@ -687,6 +715,122 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     [isOnline, isAirGapSimulated, privateKeys, addresses, activeNetwork, transactions, refreshBalances]
   );
 
+  const isBroadcastingQueuedRef = useRef(false);
+
+  const broadcastQueuedTransactions = useCallback(async () => {
+    const effectiveOnline = isOnline && !isAirGapSimulated;
+    if (!effectiveOnline) {
+      console.info('[WalletContext] Cannot broadcast queued transactions: offline or simulated air-gap.');
+      return;
+    }
+    if (!privateKeys?.solana) {
+      console.info('[WalletContext] Solana private key not available in memory. Unlock wallet to broadcast queued transactions.');
+      return;
+    }
+    if (isBroadcastingQueuedRef.current) return;
+
+    const queued = transactions.filter((t) => t.status === 'queued_offline');
+    if (queued.length === 0) return;
+
+    isBroadcastingQueuedRef.current = true;
+    try {
+      let anyUpdated = false;
+      const updatedTxs = [...transactions];
+
+      for (const tx of queued) {
+        if (tx.status !== 'queued_offline') continue;
+        if (tx.chainId !== 'solana') continue;
+
+        const parsedAmount =
+          parseFloat(tx.amount.replace(/[^0-9.]/g, '')) || parseFloat(tx.amount) || 0;
+        const senderAddress = tx.from || addresses.solana?.address;
+        const recipientAddress = tx.to;
+        if (!senderAddress || !recipientAddress || parsedAmount <= 0) continue;
+
+        try {
+          const result = await buildAndBroadcastSolanaTransfer({
+            senderAddress,
+            recipientAddress,
+            amountSol: parsedAmount,
+            privateKeyHexOrBytes: privateKeys.solana,
+            activeNetwork,
+            priorityFeeTier: tx.priorityFeeTier || 'normal',
+          });
+
+          const idx = updatedTxs.findIndex((t) => t.id === tx.id);
+          if (idx !== -1) {
+            updatedTxs[idx] = {
+              ...updatedTxs[idx],
+              status: 'confirmed',
+              hash: result.signature,
+              fee: `${result.feeSol} SOL`,
+            };
+            anyUpdated = true;
+          }
+
+          // Also check IndexedDB dot_offline_vault (queue.ts) if matching DotTx exists
+          try {
+            const allDotTxs = await getAllTxs();
+            const match = allDotTxs.find(
+              (d) =>
+                d.decoded_intent.to === recipientAddress &&
+                (d.status === 'queued' || d.status === 'broadcasting')
+            );
+            if (match) {
+              await updateTxStatus(match.tx_id, 'confirmed', { broadcast_hash: result.signature });
+            }
+          } catch (dbErr) {
+            console.warn('[WalletContext] Could not update offline queue db:', dbErr);
+          }
+        } catch (txErr) {
+          console.warn(`[WalletContext] Auto-broadcast failed for queued tx ${tx.id}:`, txErr);
+        }
+      }
+
+      if (anyUpdated) {
+        setTransactions(updatedTxs);
+        await saveTransactions(updatedTxs);
+        await refreshBalances();
+      }
+    } finally {
+      isBroadcastingQueuedRef.current = false;
+    }
+  }, [isOnline, isAirGapSimulated, privateKeys, transactions, addresses, activeNetwork, refreshBalances]);
+
+  // Track reconnection transitions: when effective online becomes true, check queued_offline transactions
+  const prevEffectiveOnlineRef = useRef<boolean>(isOnline && !isAirGapSimulated);
+  useEffect(() => {
+    const effectiveOnline = isOnline && !isAirGapSimulated;
+    const wasOffline = !prevEffectiveOnlineRef.current;
+    prevEffectiveOnlineRef.current = effectiveOnline;
+
+    if (wasOffline && effectiveOnline) {
+      const queued = transactions.filter((t) => t.status === 'queued_offline');
+      if (queued.length > 0) {
+        if (privateKeys?.solana) {
+          broadcastQueuedTransactions();
+        } else {
+          console.info('[WalletContext] Reconnected with queued offline transactions pending. Keys required in memory to broadcast.');
+        }
+      }
+    }
+  }, [isOnline, isAirGapSimulated, transactions, privateKeys, broadcastQueuedTransactions]);
+
+  // When wallet is unlocked and privateKeys become available while online, check queued_offline transactions
+  const prevSolanaKeyRef = useRef<string | null>(privateKeys?.solana || null);
+  useEffect(() => {
+    const effectiveOnline = isOnline && !isAirGapSimulated;
+    const hadNoKey = !prevSolanaKeyRef.current;
+    prevSolanaKeyRef.current = privateKeys?.solana || null;
+
+    if (hadNoKey && privateKeys?.solana && effectiveOnline) {
+      const queued = transactions.filter((t) => t.status === 'queued_offline');
+      if (queued.length > 0) {
+        broadcastQueuedTransactions();
+      }
+    }
+  }, [privateKeys, isOnline, isAirGapSimulated, transactions, broadcastQueuedTransactions]);
+
   return (
     <WalletContext.Provider
       value={{
@@ -719,6 +863,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         unlockWithPassword,
         resetVault,
         sendTransaction,
+        broadcastQueuedTransactions,
       }}
     >
       {children}

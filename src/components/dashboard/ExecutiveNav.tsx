@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Lock,
   Shield,
+  Settings,
 } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
 
@@ -19,9 +20,7 @@ interface ExecutiveNavProps {
   onViewQr?: (address: string) => void;
 }
 
-const NAV_ITEMS = [
-  { id: 'Settings', label: 'SETTINGS' },
-];
+const NAV_ITEMS: { id: string; label: string }[] = [];
 
 const SOL_CLUSTERS = [
   { id: 'Solana Mainnet-Beta', label: 'SOLANA MAINNET', desc: 'Production Network' },
@@ -296,6 +295,18 @@ export function ExecutiveNav({
               </div>
             )}
           </div>
+
+          {onOpenSettings && (
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="h-10 w-10 flex items-center justify-center rounded-none bg-white border border-black hover:bg-black hover:text-white text-black transition-colors cursor-pointer select-none"
+              title="Settings & Backup"
+              aria-label="Settings"
+            >
+              <Settings size={16} />
+            </button>
+          )}
         </div>
       </div>
     </header>

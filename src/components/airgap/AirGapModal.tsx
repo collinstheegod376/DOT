@@ -19,13 +19,44 @@ import {
   FileCode,
   Layers,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Lock,
+  Fingerprint
 } from 'lucide-react';
 import { DotTx, serializeDotTx, deserializeDotTx, signDotTx, isDotTxExpired } from '../../lib/offline/dot-tx';
 import { chunkPayload, parseChunkFrame, QrChunkAccumulator, qrToSvg } from '../../lib/offline/airgap-qr';
-import { enqueueTx } from '../../lib/offline/queue';
+import { enqueueTx, getAllTxs, subscribeToQueue } from '../../lib/offline/queue';
+import { ed25519 } from '@noble/curves/ed25519.js';
+import { utf8ToBytes } from '@noble/hashes/utils.js';
+import { base58 } from '@scure/base';
+import { useWallet } from '../../context/WalletContext';
+import { QueueViewer } from './QueueViewer';
 
-export type AirGapMode = 'export_unsigned' | 'offline_sign' | 'import_signed';
+export type AirGapMode = 'export_unsigned' | 'offline_sign' | 'import_signed' | 'queue';
+
+function parseSolanaSecretKey(rawKey: string | Uint8Array): Uint8Array {
+  if (rawKey instanceof Uint8Array) {
+    return rawKey.length === 64 ? rawKey.slice(0, 32) : rawKey;
+  }
+  const clean = rawKey.trim().replace(/^0x/i, '');
+  if (/^[0-9a-fA-F]+$/.test(clean)) {
+    if (clean.length === 64) {
+      const bytes = new Uint8Array(32);
+      for (let i = 0; i < 32; i++) {
+        bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16);
+      }
+      return bytes;
+    } else if (clean.length === 128) {
+      const bytes = new Uint8Array(32);
+      for (let i = 0; i < 32; i++) {
+        bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16);
+      }
+      return bytes;
+    }
+  }
+  const decoded = base58.decode(clean);
+  return decoded.length === 64 ? decoded.slice(0, 32) : decoded;
+}
 
 interface AirGapModalProps {
   isOpen: boolean;
@@ -55,6 +86,20 @@ export function AirGapModal({
     setPrevInitialTx(initialTx);
     setCurrentTx(initialTx);
   }
+
+  const [queuedCount, setQueuedCount] = useState<number>(0);
+
+  useEffect(() => {
+    const handleUpdate = (txs: DotTx[]) => {
+      const pending = txs.filter((t) => t.status === 'queued');
+      setQueuedCount(pending.length);
+    };
+
+    const unsubscribe = subscribeToQueue(handleUpdate);
+    getAllTxs().then(handleUpdate).catch(() => {});
+
+    return () => unsubscribe();
+  }, []);
 
   const [copied, setCopied] = useState(false);
 
@@ -209,6 +254,13 @@ export function AirGapModal({
     reader.readAsText(file);
   };
 
+  const { privateKeys, isLocked, unlockWithPassword, unlockWithPasskey, addresses } = useWallet();
+  const [unlockPassword, setUnlockPassword] = useState('');
+  const [isUnlocking, setIsUnlocking] = useState(false);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [signError, setSignError] = useState<string | null>(null);
+  const [isSigning, setIsSigning] = useState(false);
+
   const copyPayload = () => {
     if (!currentTx) return;
     const text = serializeDotTx(currentTx, true);
@@ -224,26 +276,89 @@ export function AirGapModal({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `tx-${currentTx.tx_id.slice(2, 10)}.json`;
+    const isSigned = currentTx.signatures && currentTx.signatures.length > 0;
+    a.download = `tx-${isSigned ? 'signed-' : ''}${currentTx.tx_id.slice(2, 10)}.dot-tx`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  const handleSimulatedSign = () => {
-    if (!currentTx) return;
-    const randomBytes = new Uint8Array(8);
-    crypto.getRandomValues(randomBytes);
-    const hex = Array.from(randomBytes).map((b) => b.toString(16).padStart(2, '0')).join('');
-    // Sign offline with air-gap mock/key
-    const signed = signDotTx(currentTx, {
-      signer: currentTx.decoded_intent.from,
-      signature: `0xairgap_sig_${Date.now()}_${hex}`,
-      type: currentTx.chain === 'sol' ? 'ed25519' : 'secp256k1',
-      signed_at: Date.now(),
-    });
-    setCurrentTx(signed);
-    setActiveTab('export_unsigned'); // Switch to display signed QR for scanning back
+  const handlePasswordUnlock = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!unlockPassword) return;
+    setUnlockError(null);
+    setIsUnlocking(true);
+    try {
+      const ok = await unlockWithPassword(unlockPassword);
+      if (!ok) {
+        setUnlockError('Incorrect master password or unable to decrypt Offline Vault.');
+      } else {
+        setUnlockPassword('');
+        setUnlockError(null);
+      }
+    } catch (err) {
+      setUnlockError(err instanceof Error ? err.message : 'Failed to unlock vault.');
+    } finally {
+      setIsUnlocking(false);
+    }
   };
+
+  const handlePasskeyUnlock = async () => {
+    setUnlockError(null);
+    setIsUnlocking(true);
+    try {
+      const ok = await unlockWithPasskey();
+      if (!ok) {
+        setUnlockError('Passkey authentication failed. Try master password.');
+      } else {
+        setUnlockError(null);
+      }
+    } catch (err) {
+      setUnlockError(err instanceof Error ? err.message : 'Passkey error.');
+    } finally {
+      setIsUnlocking(false);
+    }
+  };
+
+  const handleRealOfflineSign = async () => {
+    if (!currentTx) return;
+    setSignError(null);
+
+    if (isLocked || !privateKeys?.solana) {
+      setUnlockError('Offline Vault is locked. Please enter your password or passkey to unlock signing keys.');
+      return;
+    }
+
+    try {
+      setIsSigning(true);
+      const secretSeed = parseSolanaSecretKey(privateKeys.solana);
+      const derivedPubBytes = ed25519.getPublicKey(secretSeed);
+      const derivedPubBase58 = base58.encode(derivedPubBytes);
+
+      // Perform authentic Ed25519 cryptographic signing over the canonical tx_id
+      const messageToSign = utf8ToBytes(currentTx.tx_id);
+      const sigBytes = ed25519.sign(messageToSign, secretSeed);
+      const realSigBase58 = base58.encode(sigBytes);
+
+      const signer = currentTx.decoded_intent.from || addresses?.solana?.address || derivedPubBase58;
+
+      const signed = signDotTx(currentTx, {
+        signer,
+        signature: realSigBase58,
+        type: 'ed25519',
+        signed_at: Date.now(),
+      });
+
+      setCurrentTx(signed);
+      setActiveTab('export_unsigned'); // Switch to display signed QR for scanning back or downloading
+    } catch (err) {
+      console.error('[AirGapModal] Offline signing error:', err);
+      setSignError(err instanceof Error ? err.message : 'Cryptographic signing failed.');
+    } finally {
+      setIsSigning(false);
+    }
+  };
+
+  const handleSimulatedSign = handleRealOfflineSign;
 
   if (!isOpen) return null;
 
@@ -283,46 +398,61 @@ export function AirGapModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="grid grid-cols-3 border-b border-black/10 dark:border-[#353536] text-xs font-sans font-black uppercase tracking-wider bg-[#F7F7F7] dark:bg-[#1D1D1E]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 border-b border-black text-xs font-sans font-black uppercase tracking-wider bg-[#F7F7F7]">
           <button
             onClick={() => {
               stopCamera();
               setActiveTab('export_unsigned');
             }}
-            className={`py-3 px-2 flex items-center justify-center gap-2 border-b-2 transition cursor-pointer ${
+            className={`py-3 px-2 flex items-center justify-center gap-1.5 border-b-2 transition cursor-pointer ${
               activeTab === 'export_unsigned'
-                ? 'border-black dark:border-white text-black dark:text-white bg-black/5 dark:bg-white/5 font-black'
-                : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
+                ? 'border-black text-black bg-black/5 font-black'
+                : 'border-transparent text-zinc-500 hover:text-black'
             }`}
           >
-            <QrCode className="h-4 w-4" />
-            1. EXPORT TRANSACTION
+            <QrCode className="h-4 w-4 shrink-0" />
+            <span className="truncate">1. EXPORT</span>
           </button>
           <button
             onClick={() => {
+              stopCamera();
               setActiveTab('offline_sign');
             }}
-            className={`py-3 px-2 flex items-center justify-center gap-2 border-b-2 transition cursor-pointer ${
+            className={`py-3 px-2 flex items-center justify-center gap-1.5 border-b-2 transition cursor-pointer ${
               activeTab === 'offline_sign'
-                ? 'border-black dark:border-white text-black dark:text-white bg-black/5 dark:bg-white/5 font-black'
-                : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
+                ? 'border-black text-black bg-black/5 font-black'
+                : 'border-transparent text-zinc-500 hover:text-black'
             }`}
           >
-            <WifiOff className="h-4 w-4" />
-            2. OFFLINE SIGN
+            <WifiOff className="h-4 w-4 shrink-0" />
+            <span className="truncate">2. SIGN</span>
           </button>
           <button
             onClick={() => {
               setActiveTab('import_signed');
             }}
-            className={`py-3 px-2 flex items-center justify-center gap-2 border-b-2 transition cursor-pointer ${
+            className={`py-3 px-2 flex items-center justify-center gap-1.5 border-b-2 transition cursor-pointer ${
               activeTab === 'import_signed'
-                ? 'border-black dark:border-white text-black dark:text-white bg-black/5 dark:bg-white/5 font-black'
-                : 'border-transparent text-zinc-500 hover:text-black dark:hover:text-white'
+                ? 'border-black text-black bg-black/5 font-black'
+                : 'border-transparent text-zinc-500 hover:text-black'
             }`}
           >
-            <Wifi className="h-4 w-4" />
-            3. IMPORT SIGNED
+            <Wifi className="h-4 w-4 shrink-0" />
+            <span className="truncate">3. IMPORT</span>
+          </button>
+          <button
+            onClick={() => {
+              stopCamera();
+              setActiveTab('queue');
+            }}
+            className={`py-3 px-2 flex items-center justify-center gap-1.5 border-b-2 transition cursor-pointer ${
+              activeTab === 'queue'
+                ? 'border-black text-black bg-black/5 font-black'
+                : 'border-transparent text-zinc-500 hover:text-black'
+            }`}
+          >
+            <Layers className="h-4 w-4 shrink-0" />
+            <span className="truncate">4. QUEUE ({queuedCount})</span>
           </button>
         </div>
 
@@ -473,7 +603,7 @@ export function AirGapModal({
                         className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-none bg-white dark:bg-[#0F0F10] text-black dark:text-white text-xs font-sans font-black uppercase tracking-wider border border-black dark:border-[#353536] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition cursor-pointer"
                       >
                         <Download className="h-4 w-4" />
-                        DOWNLOAD JSON
+                        DOWNLOAD .DOT-TX
                       </button>
                     </div>
                   </div>
@@ -529,7 +659,7 @@ export function AirGapModal({
                           <label className="cursor-pointer px-4 py-2.5 rounded-none bg-white dark:bg-[#0F0F10] text-black dark:text-white font-sans font-black text-xs uppercase tracking-wider flex items-center gap-2 border border-black dark:border-[#353536] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition">
                             <Upload className="h-4 w-4" />
                             UPLOAD TRANSACTION FILE
-                            <input type="file" accept=".json,.txt" onChange={handleFileUpload} className="hidden" />
+                            <input type="file" accept=".dot-tx,.json,.txt" onChange={handleFileUpload} className="hidden" />
                           </label>
                         </div>
                       </div>
@@ -601,7 +731,65 @@ export function AirGapModal({
                       <div className="text-[11px] text-zinc-500 mt-2 font-mono">Deduplication ID: <span className="font-mono text-black dark:text-white font-bold">{currentTx.tx_id}</span></div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2">
+                    {(!privateKeys?.solana || isLocked) ? (
+                      <div className="rounded-none bg-[#F7F7F7] dark:bg-[#1D1D1E] border border-black dark:border-[#353536] p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs uppercase font-sans font-black tracking-wider text-black dark:text-white flex items-center gap-2">
+                            <Lock className="h-4 w-4 text-amber-500" />
+                            OFFLINE VAULT LOCKED &bull; AUTHENTICATE TO SIGN
+                          </span>
+                        </div>
+                        <p className="text-[11px] font-mono text-zinc-600 dark:text-zinc-400">
+                          Keys are purged from memory. Enter your password or passkey to decrypt local private keys into offline session memory.
+                        </p>
+                        <form onSubmit={handlePasswordUnlock} className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="password"
+                            placeholder="Enter master password"
+                            value={unlockPassword}
+                            onChange={(e) => setUnlockPassword(e.target.value)}
+                            className="flex-1 bg-white dark:bg-[#0F0F10] border border-black/20 dark:border-[#353536] px-3 py-2 text-xs font-mono text-black dark:text-white focus:outline-none focus:border-black dark:focus:border-white"
+                          />
+                          <button
+                            type="submit"
+                            disabled={isUnlocking || !unlockPassword}
+                            className="px-4 py-2 bg-black text-white dark:bg-white dark:text-black text-xs font-sans font-black uppercase tracking-wider border border-black dark:border-white disabled:opacity-40 cursor-pointer"
+                          >
+                            {isUnlocking ? 'UNLOCKING...' : 'UNLOCK'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handlePasskeyUnlock}
+                            disabled={isUnlocking}
+                            className="px-3 py-2 bg-white dark:bg-[#0F0F10] text-black dark:text-white border border-black/20 dark:border-[#353536] text-xs font-sans font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Fingerprint className="h-4 w-4" />
+                            PASSKEY
+                          </button>
+                        </form>
+                        {unlockError && (
+                          <div className="text-xs font-mono text-red-500 font-bold">{unlockError}</div>
+                        )}
+                      </div>
+                    ) : null}
+
+                    {signError && (
+                      <div className="text-xs font-mono text-red-500 font-bold p-2.5 bg-red-500/10 border border-red-500/20">
+                        {signError}
+                      </div>
+                    )}
+
+                    {currentTx.signatures && currentTx.signatures.length > 0 && (
+                      <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-mono flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                          <span className="font-bold">ED25519 SIGNATURE ATTACHED</span>
+                        </div>
+                        <span className="text-[10px] truncate max-w-[160px] font-mono">{currentTx.signatures[0].signature}</span>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
                       <button
                         onClick={() => setCurrentTx(null)}
                         className="text-xs font-sans font-black uppercase tracking-wider text-zinc-500 hover:text-black dark:hover:text-white cursor-pointer"
@@ -609,14 +797,26 @@ export function AirGapModal({
                         CANCEL / RESET
                       </button>
 
-                      <button
-                        onClick={handleSimulatedSign}
-                        className="px-6 py-3 rounded-none bg-black text-white dark:bg-white dark:text-black font-sans font-black text-xs uppercase tracking-wider flex items-center gap-2 border border-black dark:border-white hover:opacity-90 transition cursor-pointer"
-                      >
-                        <ShieldCheck className="h-4 w-4" />
-                        SIGN TRANSACTION OFFLINE
-                        <ArrowRight className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {currentTx.signatures && currentTx.signatures.length > 0 && (
+                          <button
+                            onClick={downloadDotTxFile}
+                            className="px-4 py-2.5 rounded-none bg-white dark:bg-[#0F0F10] text-black dark:text-white font-sans font-black text-xs uppercase tracking-wider flex items-center gap-2 border border-black dark:border-[#353536] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition cursor-pointer"
+                          >
+                            <Download className="h-4 w-4" />
+                            DOWNLOAD SIGNED .DOT-TX
+                          </button>
+                        )}
+                        <button
+                          onClick={handleRealOfflineSign}
+                          disabled={isSigning || isLocked || !privateKeys?.solana}
+                          className="px-6 py-3 rounded-none bg-black text-white dark:bg-white dark:text-black font-sans font-black text-xs uppercase tracking-wider flex items-center gap-2 border border-black dark:border-white hover:opacity-90 disabled:opacity-40 transition cursor-pointer"
+                        >
+                          <ShieldCheck className="h-4 w-4" />
+                          {isSigning ? 'CRYPTOGRAPHICALLY SIGNING...' : 'SIGN TRANSACTION OFFLINE'}
+                          <ArrowRight className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -666,7 +866,7 @@ export function AirGapModal({
                       <label className="cursor-pointer px-4 py-2.5 rounded-none bg-white dark:bg-[#0F0F10] text-black dark:text-white font-sans font-black text-xs uppercase tracking-wider flex items-center gap-2 border border-black dark:border-[#353536] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition">
                         <Upload className="h-4 w-4" />
                         UPLOAD SIGNED TRANSACTION
-                        <input type="file" accept=".json,.txt" onChange={handleFileUpload} className="hidden" />
+                        <input type="file" accept=".dot-tx,.json,.txt" onChange={handleFileUpload} className="hidden" />
                       </label>
                     </div>
                   </div>
@@ -701,6 +901,19 @@ export function AirGapModal({
                   </button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB 4: QUEUE VIEWER */}
+          {activeTab === 'queue' && (
+            <div className="space-y-4">
+              <QueueViewer
+                isEmbedded
+                onSelectTx={(tx, newMode) => {
+                  setCurrentTx(tx);
+                  setActiveTab(newMode);
+                }}
+              />
             </div>
           )}
         </div>
