@@ -36,6 +36,8 @@ interface SendModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultAssetSymbol?: string;
+  initialRecipient?: string;
+  initialAmount?: string;
 }
 
 type ConfirmationMode = 'passkey' | 'password' | 'hold' | 'airgap';
@@ -44,6 +46,8 @@ export function SendModal({
   isOpen,
   onClose,
   defaultAssetSymbol = 'SOL',
+  initialRecipient = '',
+  initialAmount = '',
 }: SendModalProps) {
   const {
     tokens,
@@ -56,8 +60,8 @@ export function SendModal({
   } = useWallet();
 
   const [selectedSymbol, setSelectedSymbol] = useState<string>(defaultAssetSymbol);
-  const [recipient, setRecipient] = useState('');
-  const [amount, setAmount] = useState('');
+  const [recipient, setRecipient] = useState(initialRecipient);
+  const [amount, setAmount] = useState(initialAmount);
   const [priorityFeeTier, setPriorityFeeTier] = useState<'normal' | 'turbo' | 'ultra'>('normal');
 
   const [step, setStep] = useState<'input' | 'preview' | 'success'>('input');
@@ -78,12 +82,29 @@ export function SendModal({
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const holdStartTimeRef = useRef<number | null>(null);
 
-  // Sync defaultAssetSymbol if prop changes
+  // Sync props when modal opens or initial values change
   useEffect(() => {
-    if (defaultAssetSymbol) {
-      setSelectedSymbol(defaultAssetSymbol);
+    if (isOpen) {
+      if (defaultAssetSymbol) {
+        setSelectedSymbol(defaultAssetSymbol);
+      }
+      if (initialRecipient) {
+        setRecipient(initialRecipient);
+      }
+      if (initialAmount) {
+        setAmount(initialAmount);
+      }
+      // If opened with prefilled recipient and amount from shortcut, go directly to security style selection / preview
+      if (initialRecipient && initialAmount && parseFloat(initialAmount) > 0) {
+        setStep('preview');
+      } else {
+        setStep('input');
+      }
+      setTxError(null);
+      setSignedTxHash(null);
+      setIsSigning(false);
     }
-  }, [defaultAssetSymbol]);
+  }, [isOpen, defaultAssetSymbol, initialRecipient, initialAmount]);
 
   // Auto-detect: If !isOnline || isAirGapSimulated, automatically set default confirmMode to 'airgap'
   useEffect(() => {

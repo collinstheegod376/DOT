@@ -21,6 +21,7 @@ import { TokenIcon } from '@/components/dashboard/token-icons';
 import { generateQrMatrix, generateQrSvgPath } from '@/lib/qrcode';
 
 interface QuickActionCardProps {
+  onOpenSend?: (tokenSymbol: string, recipient?: string, amount?: string) => void;
   onOpenAirGap?: () => void;
   onViewQr?: (address: string) => void;
   onSendComplete?: (txHash: string) => void;
@@ -30,12 +31,13 @@ interface QuickActionCardProps {
 type TabType = 'send' | 'receive' | 'airgap';
 
 export function QuickActionCard({
+  onOpenSend,
   onOpenAirGap,
   onViewQr,
   onSendComplete,
   initialTab = 'send',
 }: QuickActionCardProps) {
-  const { tokens, addresses, sendTransaction, isOnline } = useWallet();
+  const { tokens, addresses, isOnline } = useWallet();
 
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [selectedSymbol, setSelectedSymbol] = useState<string>('SOL');
@@ -44,7 +46,6 @@ export function QuickActionCard({
   // Send state
   const [amount, setAmount] = useState<string>('');
   const [recipient, setRecipient] = useState<string>('');
-  const [isSending, setIsSending] = useState(false);
   const [sendSuccessHash, setSendSuccessHash] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
 
@@ -116,39 +117,14 @@ export function QuickActionCard({
     setTimeout(() => setCopiedReceive(false), 2000);
   };
 
-  // Handle Send Execution
-  const handleExecuteSend = async () => {
+  // Handle Send Execution: Open confirmation & security style selection ceremony
+  const handleExecuteSend = () => {
     if (!isAddressValid || !hasSufficientBalance) return;
-    setIsSending(true);
     setSendError(null);
     setSendSuccessHash(null);
 
-    try {
-      const randomBytes = crypto.getRandomValues(new Uint8Array(32));
-      const mockTxHash = Array.from(randomBytes)
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('');
-
-      const tx = await sendTransaction({
-        chainId: 'solana',
-        hash: mockTxHash,
-        type: 'send',
-        amount,
-        fiatValueUsd: fiatEquivalent,
-        from: solAddress,
-        to: recipientTrimmed,
-        fee: '0.000005',
-        note: `Transferred ${amount} ${activeToken.symbol}`,
-      });
-
-      setSendSuccessHash(tx.hash);
-      setAmount('');
-      setRecipient('');
-      onSendComplete?.(tx.hash);
-    } catch (err: unknown) {
-      setSendError((err as Error)?.message || 'Transaction submission failed');
-    } finally {
-      setIsSending(false);
+    if (onOpenSend) {
+      onOpenSend(activeToken.symbol, recipientTrimmed, amount);
     }
   };
 
@@ -408,22 +384,16 @@ export function QuickActionCard({
               type="button"
               onClick={handleExecuteSend}
               disabled={
-                isSending ||
                 !isAddressValid ||
-                !hasSufficientBalance ||
-                !isOnline
+                !hasSufficientBalance
               }
               className={`w-full bg-black text-white dark:bg-white dark:text-black rounded-none h-12 uppercase font-sans font-black tracking-wider transition-opacity cursor-pointer border border-black dark:border-white ${
-                isSending || !isAddressValid || !hasSufficientBalance || !isOnline
+                !isAddressValid || !hasSufficientBalance
                   ? 'opacity-40 cursor-not-allowed'
                   : 'hover:opacity-90'
               }`}
             >
-              {isSending ? (
-                'PROCESSING TRANSACTION...'
-              ) : !isOnline ? (
-                'OFFLINE — SWITCH TO OFFLINE VAULT'
-              ) : !recipientTrimmed ? (
+              {!recipientTrimmed ? (
                 'ENTER RECIPIENT ADDRESS'
               ) : isAddressValid === false ? (
                 'INVALID SOLANA ADDRESS'
@@ -432,7 +402,7 @@ export function QuickActionCard({
               ) : !hasSufficientBalance ? (
                 'INSUFFICIENT BALANCE'
               ) : (
-                `SEND ${activeToken.symbol}`
+                `CONFIRM & CHOOSE SECURITY STYLE`
               )}
             </button>
           </div>

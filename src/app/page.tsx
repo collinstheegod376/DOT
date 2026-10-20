@@ -66,8 +66,18 @@ function WalletAppContent() {
 
   const solAddress = addresses.solana?.address || '';
 
-  const handleOpenSend = (assetSymbol: string = 'SOL') => {
+  // Send Modal prefill state
+  const [sendInitialRecipient, setSendInitialRecipient] = useState<string>('');
+  const [sendInitialAmount, setSendInitialAmount] = useState<string>('');
+
+  const handleOpenSend = (
+    assetSymbol: string = 'SOL',
+    recipient?: string,
+    amount?: string
+  ) => {
     setActiveAssetSymbol(assetSymbol);
+    setSendInitialRecipient(recipient || '');
+    setSendInitialAmount(amount || '');
     setSendModalOpen(true);
   };
 
@@ -131,6 +141,7 @@ function WalletAppContent() {
           <div className="lg:col-span-5 xl:col-span-4 space-y-6">
             {/* Quick Action Transfer Widget (Send / Receive / Air-Gap) */}
             <QuickActionCard
+              onOpenSend={handleOpenSend}
               onOpenAirGap={() => handleOpenAirGap('export_unsigned')}
               onViewQr={handleViewQr}
               onSendComplete={() => refreshBalances()}
@@ -189,8 +200,14 @@ function WalletAppContent() {
       {/* 4. Modals */}
       <SendModal
         isOpen={sendModalOpen}
-        onClose={() => setSendModalOpen(false)}
+        onClose={() => {
+          setSendModalOpen(false);
+          setSendInitialRecipient('');
+          setSendInitialAmount('');
+        }}
         defaultAssetSymbol={activeAssetSymbol}
+        initialRecipient={sendInitialRecipient}
+        initialAmount={sendInitialAmount}
       />
 
       <ReceiveModal
